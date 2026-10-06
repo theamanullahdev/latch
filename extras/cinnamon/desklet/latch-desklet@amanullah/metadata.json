@@ -1,0 +1,9 @@
+{
+  "uuid": "latch-desklet@amanullah",
+  "name": "Latch",
+  "description": "Desktop card with switches for Wine, xdotool and the firewall",
+  "version": "0.1",
+  "max-instances": 1,
+  "prevent-decorations": true,
+  "author": "theamanullahdev"
+}

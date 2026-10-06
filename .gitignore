@@ -1,0 +1,4 @@
+/target
+*.deb
+# local notes, never published
+docs/private.md

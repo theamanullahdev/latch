@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN" "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!-- Riskier = password (kept for a few minutes). Safer = none. -->
+<policyconfig>
+  <vendor>Latch</vendor>
+
+  <action id="org.latch.wine.enable">
+    <description>Unlock Wine</description>
+    <message>Authentication is required: unlock wine</message>
+    <defaults><allow_any>auth_admin</allow_any><allow_inactive>auth_admin</allow_inactive><allow_active>auth_admin_keep</allow_active></defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/latch/wine-enable</annotate>
+  </action>
+
+  <action id="org.latch.wine.disable">
+    <description>Lock Wine</description>
+    <message>Authentication is required: lock wine</message>
+    <defaults><allow_any>yes</allow_any><allow_inactive>yes</allow_inactive><allow_active>yes</allow_active></defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/latch/wine-disable</annotate>
+  </action>
+
+  <action id="org.latch.xdotool.enable">
+    <description>Enable xdotool</description>
+    <message>Authentication is required: enable xdotool</message>
+    <defaults><allow_any>auth_admin</allow_any><allow_inactive>auth_admin</allow_inactive><allow_active>auth_admin_keep</allow_active></defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/latch/xdotool-enable</annotate>
+  </action>
+
+  <action id="org.latch.xdotool.disable">
+    <description>Disable xdotool</description>
+    <message>Authentication is required: disable xdotool</message>
+    <defaults><allow_any>yes</allow_any><allow_inactive>yes</allow_inactive><allow_active>yes</allow_active></defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/latch/xdotool-disable</annotate>
+  </action>
+
+  <action id="org.latch.firewall.enable">
+    <description>Turn the firewall on</description>
+    <message>Authentication is required: turn the firewall on</message>
+    <defaults><allow_any>yes</allow_any><allow_inactive>yes</allow_inactive><allow_active>yes</allow_active></defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/latch/firewall-enable</annotate>
+  </action>
+
+  <action id="org.latch.firewall.disable">
+    <description>Turn the firewall off</description>
+    <message>Authentication is required: turn the firewall off</message>
+    <defaults><allow_any>auth_admin</allow_any><allow_inactive>auth_admin</allow_inactive><allow_active>auth_admin_keep</allow_active></defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/latch/firewall-disable</annotate>
+  </action>
+
+</policyconfig>

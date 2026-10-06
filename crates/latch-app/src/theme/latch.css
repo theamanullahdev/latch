@@ -1,0 +1,89 @@
+/* palette: charcoal, warm gray, amber. radius 4px. no blue, no purple */
+@define-color bg      #1c1b19;
+@define-color surface #282724;
+@define-color line    #3a3834;
+@define-color text    #e8e4da;
+@define-color dim     #9a958a;
+@define-color amber   #e0a030;
+@define-color safe    #6fae4f;
+@define-color alert   #d9534f;
+
+window, .background {
+  color: @text;
+  background-color: @bg;
+  background-image: radial-gradient(circle at 78% 8%, rgba(224,160,48,0.13), rgba(224,160,48,0) 60%),
+                    linear-gradient(160deg, #2b2723, #181715);
+}
+* { font-family: "Bricolage Grotesque", sans-serif; }
+label, radio, check { color: @text; }
+selection, *:selected { background: @amber; color: @bg; }
+
+.statusbar { background: rgba(0,0,0,0.26); padding: 8px 14px; }
+.statusbar { border-top: 1px solid rgba(255,255,255,0.06); color: @dim; transition: color 250ms ease; }
+.statusbar.risky { color: @amber; }
+
+entry, searchentry {
+  background: rgba(0,0,0,0.30); color: @text;
+  border: 1px solid @line; border-radius: 4px; box-shadow: none;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+entry:focus, searchentry:focus { border-color: @amber; background: rgba(0,0,0,0.45); }
+
+stacksidebar, stacksidebar list, stacksidebar row { background: transparent; }
+stacksidebar { background: rgba(0,0,0,0.20); border-right: 1px solid rgba(255,255,255,0.06); }
+stacksidebar row {
+  padding: 11px 16px; margin: 3px 8px; border-radius: 4px;
+  transition: background 180ms ease;
+}
+stacksidebar row:hover { background: rgba(255,255,255,0.05); }
+stacksidebar row:selected { background: rgba(224,160,48,0.14); }
+stacksidebar row label { color: @dim; transition: color 180ms ease; }
+stacksidebar row:hover label { color: @text; }
+stacksidebar row:selected label { color: @amber; font-weight: bold; }
+
+.panel-title { font-size: 26px; font-weight: bold; }
+.dim { color: @dim; }
+.state { font-weight: bold; font-size: 15px; color: @safe; transition: color 250ms ease; }
+.state.risky { color: @amber; }
+.error { color: @alert; min-height: 20px; }
+
+switch {
+  min-width: 64px; min-height: 30px;
+  background: @line; border: 1px solid rgba(255,255,255,0.08); border-radius: 4px; box-shadow: none;
+  transition: background 220ms ease, border-color 220ms ease;
+}
+switch slider {
+  min-width: 26px; min-height: 26px; margin: 1px;
+  background: @text; border: none; border-radius: 3px;
+}
+switch:checked { background: @amber; border-color: @amber; }
+switch.safe:checked { background: @safe; border-color: @safe; }
+switch:disabled { opacity: 0.5; }
+
+radio, check { background: rgba(0,0,0,0.3); border: 1px solid @line; box-shadow: none; }
+radio:checked, check:checked { background: @amber; border-color: @amber; color: @bg; }
+
+headerbar {
+  background: rgba(20,19,17,0.96); color: @text;
+  border: none; border-bottom: 1px solid rgba(255,255,255,0.06);
+  box-shadow: none; min-height: 46px; padding: 0 8px;
+}
+headerbar .title { font-weight: bold; letter-spacing: 1px; color: @text; }
+headerbar button.titlebutton {
+  background: transparent; border: none; box-shadow: none; border-radius: 4px; color: @dim;
+  transition: background 150ms ease, color 150ms ease;
+}
+headerbar button.titlebutton:hover { background: rgba(255,255,255,0.08); color: @text; }
+headerbar button.titlebutton.close:hover { background: @alert; color: @text; }
+
+.section { color: @dim; font-size: 9pt; letter-spacing: 2px; }
+button.test-btn {
+  background: transparent; color: @text; text-shadow: none;
+  border: 1px solid @line; border-radius: 4px; box-shadow: none; padding: 5px 16px;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+button.test-btn:hover { border-color: @amber; color: @amber; }
+button.test-btn:disabled { opacity: 0.5; }
+.result { font-family: "Geist Mono", monospace; font-size: 9pt; color: @dim; }
+.result.ok { color: @safe; }
+.result.bad { color: @alert; }

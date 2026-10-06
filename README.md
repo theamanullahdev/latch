@@ -1,0 +1,74 @@
+# Latch
+
+A small app for Linux Mint (Cinnamon) that switches three risky things on and off: **Wine**, **xdotool** and the **firewall**.
+
+I am building this right now. It is early. Things will break, and I will change things a lot.
+
+## Why I am making this
+
+I build Electron apps on Linux, and sometimes I need Wine to make a Windows `.exe`. Wine is great, but it also lets any `.exe` run on my machine. I do not trust random `.exe` files. So for a while I did something silly: I uninstalled Wine after every build and installed it again the next time.
+
+That got old fast, so I wrote a few shell scripts that lock and unlock Wine ([wine-locker](https://github.com/theamanullahdev/wine-locker)). They flip the execute permission on the Wine binaries. They worked, but they were just scripts in a terminal.
+
+Then a bigger problem showed up. I now let AI agents work on my computer. With a tool like `xdotool` an agent can move my mouse, type on my keyboard and click things, and nobody has to ask me first. I do not want that to be always on. I want to decide when an agent can touch my desktop, and when it cannot.
+
+The same goes for the firewall. I want one place to see it and flip it.
+
+So Latch is a control panel for exactly that: what my machine allows, and what it does not, without me asking first.
+
+## What it is
+
+- A GUI app first. The terminal is not the point.
+- Made for Cinnamon. Written in Rust with GTK3.
+- One window with a sidebar, one page per switch, and a status bar at the bottom.
+- A panel applet and a desktop desklet, so you can see the state without opening anything.
+- It has its own look (charcoal, warm gray, amber, no blue, no purple). You can switch to your system theme in Settings.
+- Each switch has a **Test** button right under it. It runs the real tool, so you can see if the switch did what it says. For Wine it runs a tiny sample program.
+- It installs its own pieces from Settings: the helper, a menu entry, the applet and the desklet. A clean Mint should be enough.
+
+## The password rule
+
+Making your machine safer should be free. Making it riskier should ask for a password.
+
+| Switch   | Safer (no password)   | Riskier (password) |
+|----------|-----------------------|--------------------|
+| Wine     | lock                  | unlock             |
+| xdotool  | disable               | enable             |
+| Firewall | turn on               | turn off           |
+
+The password prompt comes from polkit, so it is the normal system dialog. One password covers a short time, so changing a few things at once asks once.
+
+## Where it is today
+
+Early prototype. Be careful.
+
+- The window, the themes, the animations, and reading the real state all work.
+- The Wine test works in the app. I ran it for real.
+- The applet and desklet install and remove from Settings and show up in Cinnamon.
+- I am still testing the switches end to end on my own machine. The password prompt and the root helper are the parts I trust least right now.
+- Not done yet: timed unlock (Wine on for 60 seconds, then lock again), custom app name and icon, and a `.deb` I would call finished.
+
+## Try it
+
+You need Rust and the GTK3 development files.
+
+```bash
+sudo apt install libgtk-3-dev libglib2.0-dev
+git clone https://github.com/theamanullahdev/latch.git
+cd latch
+cargo run -p latch-app
+```
+
+To open a page directly: `cargo run -p latch-app -- settings` (or `wine`, `xdotool`, `firewall`).
+
+The first time you flip a switch, Latch installs a small root helper. That asks for your admin password once. You can remove it again in Settings.
+
+## How it works, short version
+
+The app runs as you. The few things that need root are done by a tiny helper that only knows six jobs (`wine-enable`, `wine-disable` and so on). Polkit decides which of those jobs need a password. The helper takes no input, so there is nothing to inject into.
+
+More detail is in [lubalab.md](lubalab.md). Design notes are in [docs/design.md](docs/design.md) and the plan is in [docs/prd.md](docs/prd.md).
+
+## License
+
+GPL-3.0-or-later. See [LICENSE](LICENSE).

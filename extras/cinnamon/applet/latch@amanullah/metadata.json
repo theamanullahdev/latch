@@ -1,0 +1,8 @@
+{
+  "uuid": "latch@amanullah",
+  "name": "Latch",
+  "description": "Panel switches for Wine, xdotool and the firewall",
+  "version": "0.1",
+  "max-instances": 1,
+  "author": "theamanullahdev"
+}

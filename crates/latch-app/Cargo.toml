@@ -1,0 +1,36 @@
+[package]
+description = "Switch Wine, xdotool and the firewall on or off"
+name = "latch-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "latch"
+path = "src/main.rs"
+
+[dependencies]
+latch-core = { path = "../latch-core" }
+gtk = { version = "0.18", package = "gtk" }
+
+[package.metadata.deb]
+name = "latch"
+maintainer = "theamanullahdev <160764893+theamanullahdev@users.noreply.github.com>"
+section = "utils"
+priority = "optional"
+depends = "$auto, pkexec | policykit-1"
+recommends = "ufw, wine"
+extended-description = "Switch Wine, xdotool and the firewall on or off from one window. Safer changes are free. Riskier changes ask for a password."
+assets = [
+  ["target/release/latch", "usr/bin/latch", "755"],
+  ["target/release/latch-helper", "usr/libexec/latch/wine-enable", "755"],
+  ["target/release/latch-helper", "usr/libexec/latch/wine-disable", "755"],
+  ["target/release/latch-helper", "usr/libexec/latch/xdotool-enable", "755"],
+  ["target/release/latch-helper", "usr/libexec/latch/xdotool-disable", "755"],
+  ["target/release/latch-helper", "usr/libexec/latch/firewall-enable", "755"],
+  ["target/release/latch-helper", "usr/libexec/latch/firewall-disable", "755"],
+  ["target/release/latch-helper", "usr/libexec/latch/latch-helper", "755"],
+  ["../../extras/packaging/polkit/org.latch.policy", "usr/share/polkit-1/actions/", "644"],
+  ["../../extras/packaging/desktop/latch.desktop", "usr/share/applications/", "644"],
+  ["../../extras/packaging/icons/latch.svg", "usr/share/icons/hicolor/scalable/apps/", "644"],
+]

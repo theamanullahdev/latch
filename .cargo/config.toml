@@ -1,0 +1,3 @@
+[alias]
+# `cargo dev` runs the GUI from source. No .deb needed.
+dev = "run -p latch-app --"

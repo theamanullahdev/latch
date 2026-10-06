@@ -1,0 +1,21 @@
+/* same palette as the app: charcoal, warm gray, amber */
+.latch-card {
+  background-color: rgba(28, 27, 25, 0.90);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 14px;
+  min-width: 230px;
+  font-family: "Bricolage Grotesque", sans-serif;
+  color: #e8e4da;
+}
+.latch-head { padding-bottom: 8px; }
+.latch-title { font-weight: bold; font-size: 11pt; letter-spacing: 2px; }
+.latch-summary { color: #6fae4f; font-size: 9pt; }
+.latch-risky-text { color: #e0a030; }
+.latch-row { padding: 8px 6px; border-radius: 4px; }
+.latch-row:hover { background-color: rgba(255, 255, 255, 0.06); }
+.latch-dot { width: 9px; height: 9px; border-radius: 5px; background-color: #5a5750; margin-right: 10px; }
+.latch-safe { background-color: #6fae4f; }
+.latch-risky { background-color: #e0a030; }
+.latch-name { font-size: 11pt; }
+.latch-state { color: #9a958a; font-size: 9pt; }
