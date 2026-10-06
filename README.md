@@ -42,11 +42,14 @@ The password prompt comes from polkit, so it is the normal system dialog. One pa
 
 Early prototype. Be careful.
 
-- The window, the themes, the animations, and reading the real state all work.
-- The Wine test works in the app. I ran it for real.
-- The applet and desklet install and remove from Settings and show up in Cinnamon.
-- I am still testing the switches end to end on my own machine. The password prompt and the root helper are the parts I trust least right now.
-- Not done yet: timed unlock (Wine on for 60 seconds, then lock again), custom app name and icon, and a `.deb` I would call finished.
+What I have tested, and how:
+
+- **The root helper**, on a fake root (a throwaway user namespace with stand-in `wine`, `xdotool` and `ufw`). Install, all six jobs, bad input and uninstall all pass. Run it yourself: `extras/scripts/e2e.sh helper`.
+- **The real window**, on that same fake root. I flipped switches, ran the Test buttons, installed and removed the helper from Settings, and used search.
+- **The `.deb`**: I unpacked it and ran the app and helper that are inside it on the fake root. The polkit policy also passes polkit's own validator.
+- **On my real desktop**: the themes (and remembering the choice), the menu entry, the panel applet and the desklet. The Wine test runs real Wine 9 with a sample program.
+
+What I have **not** tested yet: the real polkit password prompt. My test setup has to stub it, so the first real flip on a real install is still ahead of me. Also not done: timed unlock (Wine on for 60 seconds, then lock again), and a custom app name and icon.
 
 ## Try it
 

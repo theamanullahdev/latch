@@ -1,0 +1,6 @@
+#!/bin/sh
+# Refresh icon + menu caches so Latch shows up right away.
+set -e
+gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor 2>/dev/null || true
+update-desktop-database -q /usr/share/applications 2>/dev/null || true
+exit 0

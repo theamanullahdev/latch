@@ -5,6 +5,6 @@ Comment=Switch Wine, xdotool and the firewall on or off
 Exec=latch
 Icon=latch
 Terminal=false
-Categories=System;Security;Settings;
+Categories=Settings;Security;
 Keywords=wine;firewall;xdotool;lock;
 StartupWMClass=latch

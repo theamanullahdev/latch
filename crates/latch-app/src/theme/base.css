@@ -1,0 +1,13 @@
+/* always on, any theme: spacing, type size, state colors */
+.statusbar { padding: 8px 14px; }
+.statusbar.risky { color: #e0a030; }
+.panel-title { font-size: 26px; font-weight: bold; }
+.state { font-weight: bold; font-size: 15px; color: #6fae4f; }
+.state.risky { color: #e0a030; }
+.error { color: #d9534f; min-height: 20px; }
+.section { font-size: 9pt; letter-spacing: 2px; }
+.result { font-family: "Geist Mono", monospace; font-size: 9pt; }
+.result.ok { color: #6fae4f; }
+.result.bad { color: #d9534f; }
+button.test-btn { padding: 5px 16px; }
+stacksidebar row { padding: 11px 16px; margin: 3px 8px; }

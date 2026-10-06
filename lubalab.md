@@ -17,14 +17,16 @@ crates/           rust code
     src/cinnamon.rs applet + desklet enable/disable (gsettings), files embedded
     src/selftest.rs per-toggle live test (wine --version + cmd.exe, xdotool getmouselocation, ufw)
     src/fonts.rs  Bricolage Grotesque + Geist Mono embedded, to ~/.cache/latch/fonts
-    src/theme/    latch.css + Mode switch (Latch forces Adwaita-dark base, System restores user theme)
+    src/theme/    base.css (always: spacing, state colors) + latch.css (palette, Latch mode only) + Mode switch
+                  GTK3 quirk: later provider beats earlier one, no matter the specificity. Do not set `label {color}` in latch.css.
     src/config.rs ~/.config/latch/config
 docs/             prd.md, design.md
 extras/
   cinnamon/       applet latch@amanullah, desklet latch-desklet@amanullah (js, embedded in binary)
   fonts/          OFL ttf + licenses
   packaging/      polkit policy, .desktop, icons
-  scripts/        pack.sh (make .deb into target/deb/)
+  scripts/        pack.sh (make .deb into target/deb/), e2e.sh (fake-root tests: helper | gui | deb)
+  packaging/scripts/  postinst, postrm (refresh icon + menu cache)
 ```
 
 ## Flow
@@ -52,4 +54,5 @@ helper `install`: copies self to /usr/libexec/latch/{6 actions + latch-helper}, 
 - `extras/scripts/pack.sh` make .deb. .deb lands in target/deb/.
 - First switch flip or Settings > System helper installs root helper (admin prompt).
 - Build deps: libgtk-3-dev, libglib2.0-dev, cargo-deb.
+- E2E: `extras/scripts/e2e.sh helper|gui [page]|deb FILE [page]`. bwrap user ns, fake wine/xdotool/ufw, pkexec stub. Real system untouched. Polkit prompt itself not covered.
 - Screenshots: `latch <page>` then gnome-screenshot -w. xdotool clicks need window activated first.

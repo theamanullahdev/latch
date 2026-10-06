@@ -1,9 +1,11 @@
 //! Latch mode: dark base theme + latch.css. System mode: user theme untouched.
+//! base.css (spacing, sizes, state colors) applies in both.
 
 use gtk::{gdk, prelude::*};
 use std::cell::RefCell;
 
 const CSS: &str = include_str!("latch.css");
+const BASE: &str = include_str!("base.css");
 const BASE_THEME: &str = "Adwaita-dark";
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -23,6 +25,11 @@ thread_local! {
 }
 
 pub fn init(mode: Mode) {
+    if let Some(screen) = gdk::Screen::default() {
+        let base = gtk::CssProvider::new();
+        base.load_from_data(BASE.as_bytes()).expect("base.css");
+        gtk::StyleContext::add_provider_for_screen(&screen, &base, gtk::STYLE_PROVIDER_PRIORITY_USER);
+    }
     let provider = gtk::CssProvider::new();
     provider.load_from_data(CSS.as_bytes()).expect("latch.css");
     let system_theme = gtk::Settings::default()

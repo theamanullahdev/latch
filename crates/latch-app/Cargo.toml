@@ -19,6 +19,7 @@ maintainer = "theamanullahdev <160764893+theamanullahdev@users.noreply.github.co
 section = "utils"
 priority = "optional"
 depends = "$auto, pkexec | policykit-1"
+maintainer-scripts = "../../extras/packaging/scripts"
 recommends = "ufw, wine"
 extended-description = "Switch Wine, xdotool and the firewall on or off from one window. Safer changes are free. Riskier changes ask for a password."
 assets = [

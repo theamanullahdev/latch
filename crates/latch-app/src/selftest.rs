@@ -107,3 +107,31 @@ fn exec(cmd: &mut Command, secs: u64) -> Result<String, String> {
         Err(if err.is_empty() { format!("exit {}", out.status.code().unwrap_or(-1)) } else { err })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{fs, os::unix::fs::PermissionsExt};
+
+    #[test]
+    fn locked_tool_reads_as_blocked() {
+        let path = std::env::temp_dir().join("latch-selftest-locked");
+        fs::write(&path, "#!/bin/sh\necho hi\n").unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+        let res = exec(&mut Command::new(&path), 5);
+        fs::remove_file(&path).unwrap();
+        assert_eq!(res, Err("blocked (permission denied)".to_string()));
+    }
+
+    #[test]
+    fn open_tool_reports_first_line() {
+        let res = exec(Command::new("sh").args(["-c", "echo one; echo two"]), 5);
+        assert_eq!(res, Ok("one".to_string()));
+    }
+
+    #[test]
+    fn slow_tool_times_out() {
+        let res = exec(Command::new("sleep").arg("5"), 1);
+        assert_eq!(res, Err("timed out".to_string()));
+    }
+}

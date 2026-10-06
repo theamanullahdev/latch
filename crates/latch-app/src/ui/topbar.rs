@@ -2,7 +2,7 @@
 
 use gtk::prelude::*;
 
-pub fn build() -> gtk::HeaderBar {
+pub fn build() -> (gtk::HeaderBar, gtk::SearchEntry) {
     let bar = gtk::HeaderBar::new();
     bar.set_show_close_button(true);
     bar.set_title(Some("Latch"));
@@ -11,5 +11,5 @@ pub fn build() -> gtk::HeaderBar {
     search.set_placeholder_text(Some("Search"));
     search.set_width_chars(26);
     bar.pack_end(&search);
-    bar
+    (bar, search)
 }

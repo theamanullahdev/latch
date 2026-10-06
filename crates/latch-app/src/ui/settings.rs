@@ -2,6 +2,7 @@
 
 use crate::{cinnamon::{self, Kind}, config, menu, setup, theme::{self, Mode}};
 use gtk::{glib, prelude::*};
+use std::rc::Rc;
 
 type Op = fn() -> Result<(), String>;
 
@@ -68,7 +69,7 @@ fn theme_choice() -> gtk::Box {
     col
 }
 
-fn row(item: Item) -> gtk::Box {
+fn row(item: Item) -> (gtk::Box, Rc<dyn Fn()>) {
     let line = gtk::Box::new(gtk::Orientation::Horizontal, 12);
     let text = gtk::Box::new(gtk::Orientation::Vertical, 0);
     let title = gtk::Label::new(Some(item.title));
@@ -87,17 +88,18 @@ fn row(item: Item) -> gtk::Box {
     line.pack_start(&text, true, true, 0);
     line.pack_end(&button, false, false, 0);
 
-    let item = std::rc::Rc::new(item);
-    let refresh = {
+    let item = Rc::new(item);
+    let refresh: Rc<dyn Fn()> = {
         let (button, item) = (button.clone(), item.clone());
-        move || {
+        Rc::new(move || {
             button.set_label(if (item.installed)() { "Remove" } else { "Install" });
             button.set_sensitive((item.usable)());
-        }
+        })
     };
     refresh();
+    let again = refresh.clone();
     button.connect_clicked(move |b| {
-        let (b, err, item, refresh) = (b.clone(), err.clone(), item.clone(), refresh.clone());
+        let (b, err, item, refresh) = (b.clone(), err.clone(), item.clone(), again.clone());
         let op: Op = if (item.installed)() { item.remove } else { item.install };
         b.set_sensitive(false);
         err.set_text("");
@@ -108,7 +110,7 @@ fn row(item: Item) -> gtk::Box {
             refresh();
         });
     });
-    line
+    (line, refresh)
 }
 
 pub fn build() -> gtk::Box {
@@ -123,8 +125,13 @@ pub fn build() -> gtk::Box {
     page.pack_start(&heading("THEME"), false, false, 6);
     page.pack_start(&theme_choice(), false, false, 0);
     page.pack_start(&heading("INSTALL"), false, false, 6);
+    let mut refreshers = Vec::new();
     for item in items() {
-        page.pack_start(&row(item), false, false, 4);
+        let (line, refresh) = row(item);
+        page.pack_start(&line, false, false, 4);
+        refreshers.push(refresh);
     }
+    // State can change elsewhere (first switch flip installs the helper).
+    page.connect_map(move |_| refreshers.iter().for_each(|r| r()));
     page
 }
