@@ -42,11 +42,11 @@ Timed unlock ("wine on for 60 seconds, then lock") is kept from the old wine-loc
 - CLI: `latch wine off`, `latch status`, and so on.
 
 ## Settings page (in the app)
-- App name and icon (custom).
+- App name and icon (custom). Name flows to window, menu entry, applet, desklet.
 - Install / remove: system helper, menu entry, panel applet, desktop desklet.
 - Each toggle page has a live Test (real tool run, verdict vs switch).
 - Theme: Latch or System. Default Latch. Saved in ~/.config/latch/config.
-- Timed unlock default.
+- Auto-lock delay per toggle (Wine, xdotool) lives on each page, under the switch.
 - Animations on or off.
 
 ## Open questions

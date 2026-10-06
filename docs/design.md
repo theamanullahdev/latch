@@ -50,7 +50,8 @@ New features = new sidebar entry. Panel never scrolls the whole app.
 ## Main window
 - Top bar: nav, title, search.
 - Left sidebar: Wine, xdotool, Firewall, Settings.
-- Panel: badge, name, state, switch, then Test row (button, output, verdict).
+- Panel: badge, name, state, switch, Auto-lock picker (Wine, xdotool), then Test row (button, output, verdict).
+- While a timer runs the state line reads `Unlocked - locks in 4:32`.
 - Title bar is ours (headerbar), so it follows the Latch theme.
 - Locked state shows a lock icon. Unlocked shows an open lock.
 - Timed unlock shows a countdown ring on the card.

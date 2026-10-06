@@ -2,8 +2,18 @@ const Desklet = imports.ui.desklet;
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
+const ByteArray = imports.byteArray;
 
 const HELPER_DIR = "/usr/libexec/latch";
+
+/* Name from Latch settings (~/.config/latch/config, `name=`). Default Latch. */
+function appName() {
+    try {
+        let [ok, data] = GLib.file_get_contents(GLib.get_user_config_dir() + "/latch/config");
+        let m = ok && ByteArray.toString(data).match(/^name=(.+)$/m);
+        return m ? m[1].trim() : "Latch";
+    } catch (e) { return "Latch"; }
+}
 
 /* risky(on): exposed when true */
 const TOGGLES = [
@@ -53,7 +63,8 @@ class LatchDesklet extends Desklet.Desklet {
     _build() {
         this._card = new St.BoxLayout({ vertical: true, style_class: "latch-card" });
         let head = new St.BoxLayout({ style_class: "latch-head" });
-        head.add(new St.Label({ text: "LATCH", style_class: "latch-title" }), { expand: true, y_fill: false });
+        this._title = new St.Label({ text: "", style_class: "latch-title" });
+        head.add(this._title, { expand: true, y_fill: false });
         this._summary = new St.Label({ text: "", style_class: "latch-summary" });
         head.add(this._summary, { y_fill: false });
         this._card.add_actor(head);
@@ -83,6 +94,7 @@ class LatchDesklet extends Desklet.Desklet {
     }
 
     _refresh() {
+        this._title.set_text(appName().toUpperCase());
         let exposed = 0;
         for (let t of TOGGLES) {
             let on = probe(t);

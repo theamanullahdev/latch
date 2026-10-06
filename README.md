@@ -49,7 +49,14 @@ What I have tested, and how:
 - **The `.deb`**: I unpacked it and ran the app and helper that are inside it on the fake root. The polkit policy also passes polkit's own validator.
 - **On my real desktop**: the themes (and remembering the choice), the menu entry, the panel applet and the desklet. The Wine test runs real Wine 9 with a sample program.
 
-What I have **not** tested yet: the real polkit password prompt. My test setup has to stub it, so the first real flip on a real install is still ahead of me. Also not done: timed unlock (Wine on for 60 seconds, then lock again), and a custom app name and icon.
+What I have **not** tested yet: the real polkit password prompt. My test setup has to stub it, so the first real flip on a real install is still ahead of me. 
+Also tested on the fake root and my real desktop:
+
+- **Timed unlock** for Wine and xdotool. Pick a delay under the switch (1 minute to 1 hour). The state line counts down and it locks itself at zero. Locking is the safe direction, so it never needs a password. If you close Latch while a timer runs, it locks early. If a timer ran out while Latch was closed, it locks on the next start. An unlock cannot be forgotten.
+- **Custom app name and icon**, in Settings. The name shows in the window, the menu entry, the panel applet and the desklet. Any image works as an icon. A bad file is rejected.
+- Installed applets and desklets update themselves when the app updates.
+
+Not done yet: a Windows-style "run this one program with Wine unlocked" button, and per-app rules.
 
 ## Try it
 

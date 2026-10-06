@@ -11,15 +11,17 @@ crates/           rust code
   latch-helper/   root binary. one file, 6 installed names `<toggle>-<enable|disable>`
   latch-app/      gtk3 gui, bin name `latch`
     src/ui/       window, sidebar, topbar (own headerbar), statusbar, panel (+test row), orb (animated badge), settings, state
+    src/ui/autolock.rs timed unlock: 1 s ticker, flips switch off at 0. deadline saved in config. lock_pending() on window close
+    src/branding.rs custom name + icon: config, windows, menu entry refresh
     src/backend.rs pkexec call, off ui thread. helper missing = setup::install first
     src/setup.rs  system helper install/remove (pkexec latch-helper install)
     src/menu.rs   ~/.local menu entry + icon
-    src/cinnamon.rs applet + desklet enable/disable (gsettings), files embedded
+    src/cinnamon.rs applet + desklet enable/disable (gsettings), files embedded. refresh_installed() at start: rewrite stale ~/.local copies, ReloadXlet over dbus
     src/selftest.rs per-toggle live test (wine --version + cmd.exe, xdotool getmouselocation, ufw)
     src/fonts.rs  Bricolage Grotesque + Geist Mono embedded, to ~/.cache/latch/fonts
     src/theme/    base.css (always: spacing, state colors) + latch.css (palette, Latch mode only) + Mode switch
                   GTK3 quirk: later provider beats earlier one, no matter the specificity. Do not set `label {color}` in latch.css.
-    src/config.rs ~/.config/latch/config
+    src/config.rs ~/.config/latch/config (key=value: theme, name, icon, autolock_*, deadline_*). applet/desklet read `name=` in js
 docs/             prd.md, design.md
 extras/
   cinnamon/       applet latch@amanullah, desklet latch-desklet@amanullah (js, embedded in binary)
@@ -54,5 +56,5 @@ helper `install`: copies self to /usr/libexec/latch/{6 actions + latch-helper}, 
 - `extras/scripts/pack.sh` make .deb. .deb lands in target/deb/.
 - First switch flip or Settings > System helper installs root helper (admin prompt).
 - Build deps: libgtk-3-dev, libglib2.0-dev, cargo-deb.
-- E2E: `extras/scripts/e2e.sh helper|gui [page]|deb FILE [page]`. bwrap user ns, fake wine/xdotool/ufw, pkexec stub. Real system untouched. Polkit prompt itself not covered.
+- E2E: `extras/scripts/e2e.sh helper|gui [page]|deb FILE [page]`. `E2E_CONFIG='autolock_wine=60\n'` seeds the fake home config. Prints fake wine mode, config, menu entry after the GUI closes. bwrap user ns, fake wine/xdotool/ufw, pkexec stub. Real system untouched. Polkit prompt itself not covered.
 - Screenshots: `latch <page>` then gnome-screenshot -w. xdotool clicks need window activated first.

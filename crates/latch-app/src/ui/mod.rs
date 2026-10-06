@@ -1,3 +1,4 @@
+pub mod autolock;
 pub mod orb;
 pub mod panel;
 pub mod settings;

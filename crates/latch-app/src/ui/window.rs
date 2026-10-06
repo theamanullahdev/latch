@@ -1,14 +1,15 @@
 //! Main window: topbar, sidebar + panel, statusbar.
 
-use super::{panel, settings, sidebar, state::State, statusbar, topbar};
+use super::{autolock, panel, settings, sidebar, state::State, statusbar, topbar};
 use gtk::prelude::*;
 use latch_core::Toggle;
 
 pub fn build(app: &gtk::Application, page: Option<&str>) -> gtk::ApplicationWindow {
     let win = gtk::ApplicationWindow::new(app);
-    win.set_title("Latch");
-    win.set_default_size(900, 560);
-    let (bar, search) = topbar::build();
+    let name = crate::config::load().name;
+    win.set_title(&name);
+    win.set_default_size(900, 640);
+    let (bar, search) = topbar::build(&name);
     win.set_titlebar(Some(&bar));
 
     let summary = gtk::Label::new(None);
@@ -44,6 +45,10 @@ pub fn build(app: &gtk::Application, page: Option<&str>) -> gtk::ApplicationWind
     root.pack_start(&middle, true, true, 0);
     root.pack_start(&status, false, false, 0);
     win.add(&root);
+    win.connect_delete_event(|_, _| {
+        autolock::lock_pending();
+        gtk::glib::Propagation::Proceed
+    });
     win
 }
 

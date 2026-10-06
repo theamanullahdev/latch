@@ -1,7 +1,7 @@
-//! One page per toggle: orb, name, state, switch, test.
+//! One page per toggle: orb, name, state, switch, auto-lock, test.
 
-use super::{orb::Orb, state::State};
-use crate::{backend, selftest};
+use super::{autolock::{self, AutoLock}, orb::Orb, state::State};
+use crate::{backend, config, selftest};
 use gtk::{glib, prelude::*};
 use latch_core::{probe, Toggle};
 use std::{cell::Cell, rc::Rc};
@@ -49,15 +49,29 @@ pub fn build(t: Toggle, state: Rc<State>) -> gtk::Box {
         status.set_text("Not found");
     }
 
+    // Countdown text while a timer runs. No timer = plain state text.
+    let countdown: Rc<dyn Fn(Option<u64>)> = {
+        let (status, switch, show) = (status.clone(), switch.clone(), show.clone());
+        Rc::new(move |left| match left {
+            Some(s) => status.set_text(&format!("{} - locks in {}:{:02}", t.state_text(true), s / 60, s % 60)),
+            None => show(switch.is_active()),
+        })
+    };
+    let timer = AutoLock::new(t, switch.clone(), countdown);
+
     page.pack_start(&orb.area, false, false, 4);
     page.pack_start(&label(t.name(), "panel-title"), false, false, 0);
     page.pack_start(&status, false, false, 0);
     page.pack_start(&label(t.blurb(), "dim"), false, false, 0);
-    page.pack_start(&switch, false, false, 10);
+    page.pack_start(&switch, false, false, 8);
+    if t.timed() {
+        page.pack_start(&autolock_row(t), false, false, 0);
+    }
     page.pack_start(&msg, false, false, 0);
     page.pack_start(&test_row(t, state.clone()), false, false, 4);
 
     let syncing = Rc::new(Cell::new(false));
+    let handler_timer = timer.clone();
     switch.connect_active_notify(move |s| {
         if syncing.get() {
             return;
@@ -66,8 +80,8 @@ pub fn build(t: Toggle, state: Rc<State>) -> gtk::Box {
         s.set_sensitive(false);
         orb.set_busy(true);
         msg.set_text("");
-        let (s, orb, msg, show, state, syncing) =
-            (s.clone(), orb.clone(), msg.clone(), show.clone(), state.clone(), syncing.clone());
+        let (s, orb, msg, show, state, syncing, timer) =
+            (s.clone(), orb.clone(), msg.clone(), show.clone(), state.clone(), syncing.clone(), handler_timer.clone());
         glib::spawn_future_local(async move {
             let result = backend::apply(t, want).await;
             let now = probe::is_on(t).unwrap_or(!want);
@@ -75,15 +89,42 @@ pub fn build(t: Toggle, state: Rc<State>) -> gtk::Box {
             s.set_active(now);
             syncing.set(false);
             s.set_sensitive(true);
+            s.grab_focus();
             orb.set_busy(false);
             state.set(t, now);
             show(now);
+            if want && now && t.timed() {
+                timer.arm();
+            } else if !now {
+                timer.disarm();
+            }
             if let Err(e) = result {
                 msg.set_text(&e);
             }
         });
     });
+    timer.resume(on);
     page
+}
+
+/// "Auto-lock: [Off | 1 minute | ...]". Saved. Applies at the next unlock.
+fn autolock_row(t: Toggle) -> gtk::Box {
+    let row = gtk::Box::new(gtk::Orientation::Horizontal, 8);
+    row.set_halign(gtk::Align::Center);
+    let combo = gtk::ComboBoxText::new();
+    for (name, _) in autolock::CHOICES {
+        combo.append_text(name);
+    }
+    let saved = config::load().autolock[t.index()];
+    combo.set_active(Some(autolock::CHOICES.iter().position(|c| c.1 == saved).unwrap_or(0) as u32));
+    combo.set_tooltip_text(Some("Locks again by itself. Closing Latch locks it early."));
+    combo.connect_changed(move |c| {
+        let secs = c.active().and_then(|i| autolock::CHOICES.get(i as usize)).map_or(0, |c| c.1);
+        config::update(|cfg| cfg.autolock[t.index()] = secs);
+    });
+    row.pack_start(&label("Auto-lock", "dim"), false, false, 0);
+    row.pack_start(&combo, false, false, 0);
+    row
 }
 
 /// Button + output right under the switch. Verdict = tool state vs switch.

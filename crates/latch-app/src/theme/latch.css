@@ -80,3 +80,11 @@ button.test-btn {
 }
 button.test-btn:hover { border-color: @amber; color: @amber; }
 button.test-btn:disabled { opacity: 0.5; }
+
+scrolledwindow, viewport { background: transparent; }
+combobox button.combo {
+  background: rgba(0,0,0,0.30); color: @text; text-shadow: none;
+  border: 1px solid @line; border-radius: 4px; box-shadow: none; padding: 3px 10px;
+  transition: border-color 160ms ease;
+}
+combobox button.combo:hover { border-color: @amber; }

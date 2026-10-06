@@ -81,6 +81,11 @@ impl Toggle {
         Toggle::ALL.into_iter().find(|t| t.id() == id)
     }
 
+    /// Can lock itself after a delay. Firewall cannot: turning it off then on is not safer.
+    pub fn timed(self) -> bool {
+        self != Toggle::Firewall
+    }
+
     /// Risky = exposed. Firewall is risky when off.
     pub fn is_risky(self, on: bool) -> bool {
         match self {
@@ -99,6 +104,13 @@ impl Toggle {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_wine_and_xdotool_are_timed() {
+        assert!(Toggle::Wine.timed());
+        assert!(Toggle::Xdotool.timed());
+        assert!(!Toggle::Firewall.timed());
+    }
 
     #[test]
     fn helper_path_roundtrip() {

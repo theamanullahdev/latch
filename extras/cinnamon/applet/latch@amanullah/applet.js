@@ -5,10 +5,20 @@ const Clutter = imports.gi.Clutter;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const Cairo = imports.cairo;
+const ByteArray = imports.byteArray;
 
 const HELPER_DIR = "/usr/libexec/latch";
 const SAFE = [0.435, 0.682, 0.310];
 const WARN = [0.878, 0.627, 0.188];
+
+/* Name from Latch settings (~/.config/latch/config, `name=`). Default Latch. */
+function appName() {
+    try {
+        let [ok, data] = GLib.file_get_contents(GLib.get_user_config_dir() + "/latch/config");
+        let m = ok && ByteArray.toString(data).match(/^name=(.+)$/m);
+        return m ? m[1].trim() : "Latch";
+    } catch (e) { return "Latch"; }
+}
 
 /* risky(on): exposed when true */
 const TOGGLES = [
@@ -78,9 +88,9 @@ class LatchApplet extends Applet.Applet {
             this.menu.addMenuItem(item);
         }
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        let open = new PopupMenu.PopupMenuItem("Open Latch");
-        open.connect("activate", () => GLib.spawn_command_line_async("latch"));
-        this.menu.addMenuItem(open);
+        this._open = new PopupMenu.PopupMenuItem("Open");
+        this._open.connect("activate", () => GLib.spawn_command_line_async("latch"));
+        this.menu.addMenuItem(this._open);
     }
 
     _onToggled(t, value) {
@@ -103,8 +113,10 @@ class LatchApplet extends Applet.Applet {
         this._syncing = false;
         this._exposed = exposed;
         let text = exposed ? `${exposed} exposed` : "All safe";
-        this._head.label.set_text(`Latch  ·  ${text}`);
-        this.set_applet_tooltip(`Latch: ${text}`);
+        let name = appName();
+        this._head.label.set_text(`${name}  ·  ${text}`);
+        this._open.label.set_text(`Open ${name}`);
+        this.set_applet_tooltip(`${name}: ${text}`);
         this._area.queue_repaint();
     }
 

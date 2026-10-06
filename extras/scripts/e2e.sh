@@ -10,7 +10,9 @@ HELPER=$ROOT/target/debug/latch-helper
 APP=$ROOT/target/debug/latch
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
-mkdir -p "$T/fake" "$T/stub" "$T/home"
+mkdir -p "$T/fake" "$T/stub" "$T/home/.config/latch"
+# E2E_CONFIG seeds ~/.config/latch/config in the fake home (printf %b escapes).
+[ -n "${E2E_CONFIG:-}" ] && printf '%b' "$E2E_CONFIG" > "$T/home/.config/latch/config"
 
 fake() { printf '%s\n' '#!/bin/sh' "$2" > "$T/fake/$1"; chmod 755 "$T/fake/$1"; }
 fake wine 'case "$1" in --version) echo wine-fake;; *) echo latch-ok;; esac'
@@ -32,7 +34,7 @@ EXTRA=()
 sandbox() {
   bwrap --unshare-user --uid 0 --gid 0 --ro-bind / / --dev /dev --proc /proc \
     --bind "$T" "$T" --tmpfs /usr/libexec --tmpfs /usr/share/polkit-1/actions \
-    "${BIND[@]}" "${EXTRA[@]}" --setenv HOME "$T/home" --setenv PATH "$T/stub:$PATH" "$@"
+    "${BIND[@]}" "${EXTRA[@]}" --setenv HOME "$T/home" --setenv XDG_CONFIG_HOME "$T/home/.config" --setenv XDG_DATA_HOME "$T/home/.local/share" --setenv XDG_CACHE_HOME "$T/home/.cache" --setenv PATH "$T/stub:$PATH" "$@"
 }
 
 INSIDE='
@@ -75,14 +77,22 @@ run_helper() {
   [ "$fail" -eq 0 ]
 }
 
+# After the GUI exits: show what it left behind in the fake root.
+report() {
+  echo "== fake wine mode: $(stat -c %a "$T/fake/wine")  xdotool mode: $(stat -c %a "$T/fake/xdotool")"
+  echo "== config:"; cat "$T/home/.config/latch/config" 2>/dev/null | sed 's/^/   /'
+  echo "== icon files: $(ls "$T/home/.local/share/latch" 2>/dev/null | tr "\n" " ")"
+  echo "== menu entry:"; cat "$T/home/.local/share/applications/latch.desktop" 2>/dev/null | grep -E "^(Name|Icon)=" | sed 's/^/   /'
+}
+
 case "${1:-}" in
   helper) run_helper ;;
-  gui) shift; sandbox "$APP" "$@" ;;
+  gui) shift; sandbox "$APP" "$@"; report ;;
   deb)
     DEB=${2:?path to .deb}; shift 2
     mkdir -p "$T/deb" && dpkg-deb -x "$DEB" "$T/deb" || exit 1
     EXTRA=(--bind "$T/deb/usr/libexec/latch" /usr/libexec/latch
            --bind "$T/deb/usr/share/polkit-1/actions/org.latch.policy" /usr/share/polkit-1/actions/org.latch.policy)
-    sandbox "$T/deb/usr/bin/latch" "$@" ;;
+    sandbox "$T/deb/usr/bin/latch" "$@"; report ;;
   *) echo "usage: e2e.sh helper | gui [page] | deb FILE [page]"; exit 2 ;;
 esac

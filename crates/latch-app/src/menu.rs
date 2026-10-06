@@ -1,5 +1,6 @@
 //! Menu entry for this user. Desktop file + icon embedded, written to ~/.local/share.
 
+use crate::config;
 use gtk::glib;
 use std::{env, fs, path::PathBuf, process::Command};
 
@@ -24,7 +25,12 @@ pub fn install() -> Result<(), String> {
     let icons = icon_dir().join("scalable").join("apps");
     fs::create_dir_all(apps.parent().unwrap()).map_err(|e| e.to_string())?;
     fs::create_dir_all(&icons).map_err(|e| e.to_string())?;
-    let entry = DESKTOP.replace("Exec=latch", &format!("Exec=\"{}\"", exe.display()));
+    let cfg = config::load();
+    let icon = cfg.icon.map_or("latch".to_string(), |p| p.display().to_string());
+    let entry = DESKTOP
+        .replace("Exec=latch", &format!("Exec=\"{}\"", exe.display()))
+        .replacen("Name=Latch", &format!("Name={}", cfg.name), 1)
+        .replace("Icon=latch", &format!("Icon={icon}"));
     fs::write(&apps, entry).map_err(|e| e.to_string())?;
     fs::write(icons.join("latch.svg"), ICON).map_err(|e| e.to_string())?;
     refresh_icons();

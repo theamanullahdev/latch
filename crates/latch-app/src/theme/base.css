@@ -11,3 +11,4 @@
 .result.bad { color: #d9534f; }
 button.test-btn { padding: 5px 16px; }
 stacksidebar row { padding: 11px 16px; margin: 3px 8px; }
+.latch-title { font-weight: bold; letter-spacing: 1px; margin: 0 10px; }

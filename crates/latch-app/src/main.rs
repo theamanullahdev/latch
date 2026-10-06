@@ -1,4 +1,5 @@
 mod backend;
+mod branding;
 mod cinnamon;
 mod config;
 mod fonts;
@@ -18,8 +19,10 @@ fn main() -> gtk::glib::ExitCode {
     let page = std::env::args().nth(1);
     app.connect_activate(move |app| {
         fonts::load();
-        theme::init(config::load_theme());
+        theme::init(config::load().theme);
         ui::window::build(app, page.as_deref()).show_all();
+        branding::apply();
+        std::thread::spawn(cinnamon::refresh_installed);
     });
     app.run_with_args::<&str>(&[])
 }

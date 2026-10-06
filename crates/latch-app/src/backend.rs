@@ -14,6 +14,11 @@ pub async fn apply(t: Toggle, on: bool) -> Result<(), String> {
         .map_err(|_| "Worker crashed".to_string())?
 }
 
+/// Same job, on the calling thread. For quit-time locking.
+pub fn apply_blocking(t: Toggle, on: bool) -> Result<(), String> {
+    run(&t.helper_path(Direction::from_on(on)))
+}
+
 fn run(path: &str) -> Result<(), String> {
     if !setup::is_installed() {
         setup::install()?;

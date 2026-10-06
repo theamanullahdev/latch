@@ -2,7 +2,7 @@
 //! Files are embedded in the binary. Written to ~/.local/share on enable.
 
 use gtk::{gio, glib, prelude::*};
-use std::fs;
+use std::{fs, path::PathBuf, process::Command};
 
 
 #[derive(Clone, Copy)]
@@ -32,6 +32,18 @@ impl Kind {
             Kind::Applet => "applets",
             Kind::Desklet => "desklets",
         }
+    }
+
+    /// Cinnamon's role name, as ReloadXlet wants it.
+    fn role(self) -> &'static str {
+        match self {
+            Kind::Applet => "APPLET",
+            Kind::Desklet => "DESKLET",
+        }
+    }
+
+    fn user_dir(self) -> PathBuf {
+        glib::user_data_dir().join("cinnamon").join(self.dir()).join(self.uuid())
     }
 
     fn files(self) -> &'static [(&'static str, &'static str)] {
@@ -76,12 +88,32 @@ pub fn is_enabled(kind: Kind) -> bool {
 }
 
 fn ensure_files(kind: Kind) -> Result<(), String> {
-    let dir = glib::user_data_dir().join("cinnamon").join(kind.dir()).join(kind.uuid());
+    let dir = kind.user_dir();
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     for (name, body) in kind.files() {
         fs::write(dir.join(name), body).map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+/// Installed copies go stale after an app update. Rewrite them, then reload in Cinnamon.
+pub fn refresh_installed() {
+    for kind in [Kind::Applet, Kind::Desklet] {
+        if !is_enabled(kind) {
+            continue;
+        }
+        let dir = kind.user_dir();
+        let stale = kind
+            .files()
+            .iter()
+            .any(|(name, body)| fs::read_to_string(dir.join(name)).map_or(true, |now| now != *body));
+        if stale && ensure_files(kind).is_ok() {
+            let _ = Command::new("gdbus")
+                .args(["call", "--session", "--dest", "org.Cinnamon", "--object-path", "/org/Cinnamon"])
+                .args(["--method", "org.Cinnamon.ReloadXlet", kind.uuid(), kind.role()])
+                .output();
+        }
+    }
 }
 
 /// Next free numeric id across all entries (last field for applets, second for desklets).
