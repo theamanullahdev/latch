@@ -1,0 +1,38 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Architectures: amd64
+Codename: stable
+Components: main
+Date: Tue, 20 Oct 2026 20:46:49 +0000
+Description: Latch apt repository
+Label: Latch
+Origin: Latch
+Suite: stable
+MD5Sum:
+ 7e209ed981f5b01afdebbb037a5bd734              168 Release
+ de3196a1198ae643b5918af86ed8601d              949 main/binary-amd64/Packages
+ a4a6dea5bcb33a3de3b4ca44f506b9b4              617 main/binary-amd64/Packages.gz
+ d47cd7a4446fc9d1e1316dd3329b75d2              692 main/binary-amd64/Packages.xz
+SHA1:
+ 59f300f3d0d58bcebe0799f411808e858b6a18e8              168 Release
+ bb2b75b235ff8d89c6c655283a2190e16404534f              949 main/binary-amd64/Packages
+ 387d085676d64436679f6b22786f0d6bd8d79a2b              617 main/binary-amd64/Packages.gz
+ 5688d8187f19783d1b1f9a332315ad890a00f3ec              692 main/binary-amd64/Packages.xz
+SHA256:
+ 19cd489db9af0b0f46765515c676598d8b646097a5f6c6a1c01e5c7374065194              168 Release
+ acf4da5c8f6fb372c94a1840166dd5e9dff9322bc2882685168e85afc40466ad              949 main/binary-amd64/Packages
+ e10d50c25f1355a1d4d420303eea0a7ceb95166b07c680838430a7a5e675b5cd              617 main/binary-amd64/Packages.gz
+ ddd358c2c4b19344f6f45e9f99fb377a19f96e7050bb77f664eaa02a44775317              692 main/binary-amd64/Packages.xz
+SHA512:
+ 3a291f1da254a15a1862ba4d706b247294fe8a492e5ea759832e53947448176a9036fc8ce2092477fb55d36c0bf951d2fa43630c7b15564fe4d4c20c92fa5014              168 Release
+ 5f8fd80bf348c87949a4c721af5cfbe4c69d8dca85fa8df9c24daf141a9164f06b7bc0f51b6ef2e68096bd38ce6742cdbaf1b8d0f9a152c7629c14c447160f3c              949 main/binary-amd64/Packages
+ 3c5d2a35e4196e645091cd532d1ab0256c200cbbb49cb88da855ae9128c42d929aa41effb6372eaf4ed9522a5d59979aadd744a566e4e44974be72b706d58e18              617 main/binary-amd64/Packages.gz
+ cc6652825253a4ea2964d29317c64969333a8c5e7fce0227d42b243a6cb23c66436f603d6a65d309f2d2b679c2f3131dda4a9647a9aafed07326f08589d61a19              692 main/binary-amd64/Packages.xz
+-----BEGIN PGP SIGNATURE-----
+
+iHUEARYKAB0WIQTZDW/2LzF+vn4JPVolDjLITSr30AUCatfTOQAKCRAlDjLITSr3
+0EAsAP9KANemUtUJ66oEvbnYFPXpq3Srhdof5EQ2dESNF9qaBAD/fxJRDB+d1QtU
+/6QfCiiSUkWM3AEzkJg532PuKsq9vwU=
+=k7BS
+-----END PGP SIGNATURE-----
