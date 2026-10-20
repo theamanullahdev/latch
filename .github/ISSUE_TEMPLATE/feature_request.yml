@@ -1,0 +1,16 @@
+name: Feature request
+description: Something Latch should do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: What do you want Latch to do?
+      description: What problem does it solve for you?
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Distro and desktop (if it matters)
+      placeholder: "Arch with Hyprland, ..."

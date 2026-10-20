@@ -1,0 +1,64 @@
+name: AUR
+
+# On a v* tag: update the AUR package `latch`.
+# Needs the repo secret AUR_SSH_PRIVATE_KEY (a key whose public half is on your AUR account).
+# Without the secret this workflow does nothing and still passes.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  aur:
+    runs-on: ubuntu-24.04
+    container: archlinux:base-devel
+    steps:
+      - name: Is AUR set up?
+        id: gate
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::AUR_SSH_PRIVATE_KEY is not set. Skipping the AUR update."
+          fi
+      - name: Packages
+        if: steps.gate.outputs.skip != 'true'
+        run: pacman -Syu --noconfirm --needed git openssh pacman-contrib rust gtk3 polkit fontconfig pkgconf
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.gate.outputs.skip != 'true'
+      - name: Prepare PKGBUILD and .SRCINFO for this tag
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          CRATE=$(grep -m1 '^version' Cargo.toml | cut -d'"' -f2)
+          [ "$VERSION" = "$CRATE" ] || { echo "::error::tag $VERSION != Cargo.toml $CRATE"; exit 1; }
+          useradd -m builder
+          mkdir /tmp/pkg && cp extras/packaging/arch/PKGBUILD /tmp/pkg/
+          sed -i "s/^pkgver=.*/pkgver=$VERSION/; s/^pkgrel=.*/pkgrel=1/" /tmp/pkg/PKGBUILD
+          chown -R builder /tmp/pkg
+          su builder -c "cd /tmp/pkg && updpkgsums && makepkg -f -d --noconfirm && makepkg --printsrcinfo > .SRCINFO"
+      - name: Push to the AUR
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur && chmod 600 ~/.ssh/aur
+          # Pin the AUR host key. This is the published ed25519 fingerprint.
+          ssh-keyscan -t ed25519 aur.archlinux.org > ~/.ssh/known_hosts 2>/dev/null
+          FP=$(ssh-keygen -lf ~/.ssh/known_hosts | awk '{print $2}')
+          [ "$FP" = "SHA256:RFzBCUItH9LZS0cKB5UE6ceAYhBD5C8GeOBip8Z11+4" ] || { echo "::error::unexpected AUR host key $FP"; exit 1; }
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/aur -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          git clone ssh://aur@aur.archlinux.org/latch.git /tmp/aur
+          cp /tmp/pkg/PKGBUILD /tmp/pkg/.SRCINFO /tmp/aur/
+          cd /tmp/aur
+          git config user.name "theamanullahdev"
+          git config user.email "160764893+theamanullahdev@users.noreply.github.com"
+          git add PKGBUILD .SRCINFO
+          if git diff --cached --quiet; then echo "AUR already up to date"; exit 0; fi
+          git commit -m "Update to ${GITHUB_REF_NAME#v}"
+          git push origin HEAD:master

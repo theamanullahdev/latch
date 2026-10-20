@@ -17,6 +17,7 @@ pub enum Mode {
 struct Slot {
     provider: gtk::CssProvider,
     system_theme: Option<String>,
+    system_dark: bool,
     applied: Option<Mode>,
 }
 
@@ -35,7 +36,8 @@ pub fn init(mode: Mode) {
     let system_theme = gtk::Settings::default()
         .and_then(|s| s.gtk_theme_name())
         .map(|n| n.to_string());
-    SLOT.with(|s| *s.borrow_mut() = Some(Slot { provider, system_theme, applied: None }));
+    let system_dark = gtk::Settings::default().is_some_and(|s| s.is_gtk_application_prefer_dark_theme());
+    SLOT.with(|s| *s.borrow_mut() = Some(Slot { provider, system_theme, system_dark, applied: None }));
     apply(mode);
 }
 
@@ -55,13 +57,18 @@ pub fn apply(mode: Mode) {
         match mode {
             Mode::Latch => {
                 settings.set_gtk_theme_name(Some(BASE_THEME));
+                // Systems without the Adwaita-dark theme still get GTK's built-in dark variant.
+                settings.set_gtk_application_prefer_dark_theme(true);
                 gtk::StyleContext::add_provider_for_screen(
                     &screen,
                     &slot.provider,
                     gtk::STYLE_PROVIDER_PRIORITY_USER,
                 );
             }
-            Mode::System => settings.set_gtk_theme_name(slot.system_theme.as_deref()),
+            Mode::System => {
+                settings.set_gtk_theme_name(slot.system_theme.as_deref());
+                settings.set_gtk_application_prefer_dark_theme(slot.system_dark);
+            }
         }
         slot.applied = Some(mode);
     });

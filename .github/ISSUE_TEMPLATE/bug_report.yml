@@ -1,0 +1,41 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Latch is an early prototype. Thanks for trying it. Please do not paste passwords or private paths.
+  - type: input
+    id: version
+    attributes:
+      label: Latch version
+      description: "Run `latch status` or `apt policy latch`."
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Distro and desktop
+      placeholder: "Linux Mint 22.3 Cinnamon, Arch with Hyprland, ..."
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options: [apt repository, .deb from Releases, AUR, built from source]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: status
+    attributes:
+      label: Output of `latch status`
+      render: text

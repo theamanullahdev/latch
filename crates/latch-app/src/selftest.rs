@@ -4,6 +4,7 @@ use gtk::gio;
 use latch_core::Toggle;
 use std::{
     io::ErrorKind,
+    path::Path,
     process::{Command, Stdio},
     thread,
     time::{Duration, Instant},
@@ -51,9 +52,27 @@ fn wine() -> Outcome {
     Outcome { works: false, lines }
 }
 
+/// xdotool gets a real call. Wayland tools only need to start (they may want a daemon).
 fn xdotool() -> Outcome {
-    let out = exec(Command::new("/usr/bin/xdotool").arg("getmouselocation"), 10);
-    Outcome { works: out.is_ok(), lines: vec![report("xdotool getmouselocation", &out)] }
+    let mut lines = Vec::new();
+    let mut works = false;
+    for name in latch_core::probe::INPUT_TOOLS {
+        let path = format!("/usr/bin/{name}");
+        if !Path::new(&path).exists() {
+            continue;
+        }
+        let res = if name == "xdotool" {
+            exec(Command::new(&path).arg("getmouselocation"), 10)
+        } else {
+            launch(Command::new(&path).arg("--help"), 10)
+        };
+        works |= res.is_ok();
+        lines.push(report(name, &res));
+    }
+    if lines.is_empty() {
+        lines.push("no input tool installed".into());
+    }
+    Outcome { works, lines }
 }
 
 fn firewall() -> Outcome {
@@ -73,8 +92,8 @@ fn report(what: &str, res: &Result<String, String>) -> String {
     }
 }
 
-/// First stdout line on success. Short reason on failure.
-fn exec(cmd: &mut Command, secs: u64) -> Result<String, String> {
+/// Start it and wait. Err = could not start (blocked, missing) or timed out.
+fn run_child(cmd: &mut Command, secs: u64) -> Result<std::process::Output, String> {
     let mut child = cmd
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
@@ -98,7 +117,12 @@ fn exec(cmd: &mut Command, secs: u64) -> Result<String, String> {
             Err(e) => return Err(e.to_string()),
         }
     }
-    let out = child.wait_with_output().map_err(|e| e.to_string())?;
+    child.wait_with_output().map_err(|e| e.to_string())
+}
+
+/// First stdout line on success. Short reason on failure.
+fn exec(cmd: &mut Command, secs: u64) -> Result<String, String> {
+    let out = run_child(cmd, secs)?;
     let first = |b: &[u8]| String::from_utf8_lossy(b).lines().next().unwrap_or("").trim().to_string();
     if out.status.success() {
         Ok(first(&out.stdout))
@@ -106,6 +130,11 @@ fn exec(cmd: &mut Command, secs: u64) -> Result<String, String> {
         let err = first(&out.stderr);
         Err(if err.is_empty() { format!("exit {}", out.status.code().unwrap_or(-1)) } else { err })
     }
+}
+
+/// Starting is enough. Exit code is ignored.
+fn launch(cmd: &mut Command, secs: u64) -> Result<String, String> {
+    run_child(cmd, secs).map(|_| "starts".to_string())
 }
 
 #[cfg(test)]
@@ -127,6 +156,11 @@ mod tests {
     fn open_tool_reports_first_line() {
         let res = exec(Command::new("sh").args(["-c", "echo one; echo two"]), 5);
         assert_eq!(res, Ok("one".to_string()));
+    }
+
+    #[test]
+    fn launch_ignores_exit_code() {
+        assert_eq!(launch(Command::new("sh").args(["-c", "exit 3"]), 5), Ok("starts".to_string()));
     }
 
     #[test]

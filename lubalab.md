@@ -7,7 +7,7 @@ Map of repo. Read this, not the whole tree. Edit a line on any major change.
 Cargo.toml        workspace
 lubalab.md        this map
 CHANGELOG.md      keep-a-changelog. release notes come from the matching section
-.github/workflows ci.yml (test + clippy), release.yml (v* tag -> .deb, release, apt repo)
+.github/          workflows: ci.yml (test + clippy + Arch container build), release.yml (v* tag -> .deb, release, apt repo), aur.yml (v* tag -> AUR). dependabot.yml, ISSUE_TEMPLATE/
 crates/           rust code
   latch-core/     Toggle, Direction, password rules. no gtk
   latch-helper/   root binary. one file, 6 installed names `<toggle>-<enable|disable>`
@@ -15,6 +15,7 @@ crates/           rust code
     src/ui/       window, sidebar, topbar (own headerbar), statusbar, panel (+test row), orb (animated badge), settings, state
     src/ui/autolock.rs timed unlock: 1 s ticker, flips switch off at 0. deadline saved in config. lock_pending() on window close
     src/branding.rs custom name + icon: config, windows, menu entry refresh
+    src/cli.rs    `latch status [--json]` (Waybar), `latch set <toggle> <on|off>`. no gtk, runs before the window
     src/backend.rs pkexec call, off ui thread. helper missing = setup::install first
     src/setup.rs  system helper install/remove (pkexec latch-helper install)
     src/menu.rs   ~/.local menu entry + icon
@@ -28,7 +29,7 @@ docs/             prd.md, design.md, screenshots/ (README images, taken on the f
 extras/
   cinnamon/       applet latch@amanullah, desklet latch-desklet@amanullah (js, embedded in binary)
   fonts/          OFL ttf + licenses
-  packaging/      polkit policy, .desktop, icons, apt-index.html (landing page of the apt repo)
+  packaging/      polkit policy, .desktop, icons, apt-index.html (landing page of the apt repo), arch/PKGBUILD
   scripts/        apt-repo.sh (signed apt repo with apt-ftparchive), pack.sh (make .deb into target/deb/), e2e.sh (fake-root tests: helper | gui | deb)
   packaging/scripts/  postinst, postrm (refresh icon + menu cache)
 ```
@@ -68,3 +69,7 @@ helper `install`: copies self to /usr/libexec/latch/{6 actions + latch-helper}, 
 - Signing key: secret `APT_GPG_PRIVATE_KEY` in the repo. Private backup lives outside the repo (see local memory). Lose it = rotate the key and every user re-adds it.
 - Actions are pinned by commit SHA. Bump them on purpose, not with `@v7`.
 - Built on ubuntu-24.04 (glibc 2.39), so Mint 22+ and Ubuntu 24.04+ only.
+- Arch: PKGBUILD in extras/packaging/arch. aur.yml pushes it to the AUR on a tag, but only if repo secret `AUR_SSH_PRIVATE_KEY` exists. One-time setup (needs a human): make an AUR account, add an SSH public key to it, put the private key in that secret. First push to `ssh://aur@aur.archlinux.org/latch.git` creates the package.
+- CI `arch` job: builds + tests in archlinux:base-devel and runs makepkg on the PKGBUILD (it builds the last tagged release tarball).
+- Input tools covered by the "xdotool" switch: see INPUT_TOOLS in latch-core/src/probe.rs. Add new tools there only.
+- GTK3 quirk: cross-provider CSS, later provider wins regardless of specificity.

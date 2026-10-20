@@ -2,6 +2,19 @@
 
 All notable changes to Latch. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows [Semantic Versioning](https://semver.org/). Versions below 1.0.0 are early prototypes.
 
+## [Unreleased]
+
+### Added
+- Arch Linux packaging: a `PKGBUILD` and an AUR publish workflow (it stays idle until AUR credentials are added).
+- CI builds and tests on a real Arch Linux container, and builds the Arch package.
+- Wayland groundwork: the "xdotool" switch also covers `ydotool`, `ydotoold`, `wtype`, `dotool` and `dotoold`.
+- Terminal commands: `latch status`, `latch status --json` (for Waybar on Hyprland) and `latch set <toggle> <on|off>`.
+- README sections for Arch and Hyprland, issue templates, and Dependabot for the pinned GitHub Actions.
+
+### Changed
+- A switch that covers several files now reads as unlocked if any one of them can still be run.
+- Latch theme asks GTK for its built-in dark variant too, so it stays dark where the Adwaita-dark theme is not installed.
+
 ## [0.1.0] - 2026-10-21
 
 First public pre-release.

@@ -1,0 +1,58 @@
+# Maintainer: theamanullahdev <160764893+theamanullahdev@users.noreply.github.com>
+pkgname=latch
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Switch Wine, xdotool and the firewall on or off from one window'
+arch=('x86_64')
+url='https://github.com/theamanullahdev/latch'
+license=('GPL-3.0-or-later')
+depends=('gtk3' 'cairo' 'glib2' 'gdk-pixbuf2' 'fontconfig' 'polkit')
+makedepends=('cargo')
+optdepends=(
+  'wine: what the Wine switch locks'
+  'ufw: what the Firewall switch turns on and off'
+  'xdotool: input tool the xdotool switch locks (X11)'
+  'ydotool: input tool the xdotool switch locks (Wayland)'
+  'wtype: input tool the xdotool switch locks (Wayland)'
+  'cinnamon: panel applet and desklet'
+)
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('4ceceaa1abb7ac1edf23046f8d723c0391f51c60a5623b605cd9159ae650eff6')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release --workspace
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo test --frozen --workspace
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 target/release/latch "$pkgdir/usr/bin/latch"
+
+  # The root helper is one program installed under seven names. The name picks the job.
+  # Latch looks for it in /usr/libexec/latch, and the polkit policy points there too.
+  for job in wine-enable wine-disable xdotool-enable xdotool-disable \
+             firewall-enable firewall-disable latch-helper; do
+    install -Dm755 target/release/latch-helper "$pkgdir/usr/libexec/latch/$job"
+  done
+
+  install -Dm644 extras/packaging/polkit/org.latch.policy -t "$pkgdir/usr/share/polkit-1/actions/"
+  install -Dm644 extras/packaging/desktop/latch.desktop -t "$pkgdir/usr/share/applications/"
+  install -Dm644 extras/packaging/icons/latch.svg -t "$pkgdir/usr/share/icons/hicolor/scalable/apps/"
+  install -Dm644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
+  # The UI fonts are embedded in the binary. Ship their licenses.
+  install -Dm644 extras/fonts/*-OFL.txt -t "$pkgdir/usr/share/licenses/$pkgname/"
+}

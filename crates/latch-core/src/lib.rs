@@ -56,7 +56,7 @@ impl Toggle {
     pub fn blurb(self) -> &'static str {
         match self {
             Toggle::Wine => "Run .exe files through Wine.",
-            Toggle::Xdotool => "Let agents control keyboard and mouse.",
+            Toggle::Xdotool => "Let agents control keyboard and mouse (xdotool, ydotool, wtype).",
             Toggle::Firewall => "Block incoming connections (ufw).",
         }
     }

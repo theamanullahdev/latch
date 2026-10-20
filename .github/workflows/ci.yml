@@ -26,3 +26,21 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - run: cargo test --workspace
       - run: cargo clippy --workspace --all-targets -- -D warnings
+
+  # Nobody has to own an Arch machine: build and test on a real Arch Linux container,
+  # then build the package from the PKGBUILD.
+  arch:
+    runs-on: ubuntu-24.04
+    container: archlinux:base-devel
+    steps:
+      - name: Packages
+        run: pacman -Syu --noconfirm --needed git rust gtk3 polkit fontconfig pkgconf
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: cargo test --workspace
+      - name: Build the Arch package (PKGBUILD)
+        run: |
+          useradd -m builder
+          mkdir /tmp/pkg && cp extras/packaging/arch/PKGBUILD /tmp/pkg/
+          chown -R builder /tmp/pkg
+          su builder -c "cd /tmp/pkg && makepkg -f -d --noconfirm"
+          pacman -Qlp /tmp/pkg/*.pkg.tar.zst
