@@ -6,6 +6,8 @@ Map of repo. Read this, not the whole tree. Edit a line on any major change.
 ```
 Cargo.toml        workspace
 lubalab.md        this map
+CHANGELOG.md      keep-a-changelog. release notes come from the matching section
+.github/workflows ci.yml (test + clippy), release.yml (v* tag -> .deb, release, apt repo)
 crates/           rust code
   latch-core/     Toggle, Direction, password rules. no gtk
   latch-helper/   root binary. one file, 6 installed names `<toggle>-<enable|disable>`
@@ -22,12 +24,12 @@ crates/           rust code
     src/theme/    base.css (always: spacing, state colors) + latch.css (palette, Latch mode only) + Mode switch
                   GTK3 quirk: later provider beats earlier one, no matter the specificity. Do not set `label {color}` in latch.css.
     src/config.rs ~/.config/latch/config (key=value: theme, name, icon, autolock_*, deadline_*). applet/desklet read `name=` in js
-docs/             prd.md, design.md
+docs/             prd.md, design.md, screenshots/ (README images, taken on the fake root)
 extras/
   cinnamon/       applet latch@amanullah, desklet latch-desklet@amanullah (js, embedded in binary)
   fonts/          OFL ttf + licenses
-  packaging/      polkit policy, .desktop, icons
-  scripts/        pack.sh (make .deb into target/deb/), e2e.sh (fake-root tests: helper | gui | deb)
+  packaging/      polkit policy, .desktop, icons, apt-index.html (landing page of the apt repo)
+  scripts/        apt-repo.sh (signed apt repo with apt-ftparchive), pack.sh (make .deb into target/deb/), e2e.sh (fake-root tests: helper | gui | deb)
   packaging/scripts/  postinst, postrm (refresh icon + menu cache)
 ```
 
@@ -58,3 +60,11 @@ helper `install`: copies self to /usr/libexec/latch/{6 actions + latch-helper}, 
 - Build deps: libgtk-3-dev, libglib2.0-dev, cargo-deb.
 - E2E: `extras/scripts/e2e.sh helper|gui [page]|deb FILE [page]`. `E2E_CONFIG='autolock_wine=60\n'` seeds the fake home config. Prints fake wine mode, config, menu entry after the GUI closes. bwrap user ns, fake wine/xdotool/ufw, pkexec stub. Real system untouched. Polkit prompt itself not covered.
 - Screenshots: `latch <page>` then gnome-screenshot -w. xdotool clicks need window activated first.
+
+## Release
+- Install for users: apt repo `https://theamanullahdev.github.io/latch` (suite stable, component main, amd64). Pages serves the `gh-pages` branch.
+- New version: bump `version` in Cargo.toml, add `## [X.Y.Z] - date` to CHANGELOG.md, commit, then `git tag -a vX.Y.Z -m "..."` and `git push origin vX.Y.Z`.
+- release.yml checks tag == Cargo version, runs test + clippy, builds, makes .deb + SHA256SUMS, creates the GitHub Release (pre-release while 0.x), and adds the .deb to the signed apt repo.
+- Signing key: secret `APT_GPG_PRIVATE_KEY` in the repo. Private backup lives outside the repo (see local memory). Lose it = rotate the key and every user re-adds it.
+- Actions are pinned by commit SHA. Bump them on purpose, not with `@v7`.
+- Built on ubuntu-24.04 (glibc 2.39), so Mint 22+ and Ubuntu 24.04+ only.
