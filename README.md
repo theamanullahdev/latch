@@ -1,8 +1,86 @@
 # Latch
 
+[![CI](https://github.com/theamanullahdev/latch/actions/workflows/ci.yml/badge.svg)](https://github.com/theamanullahdev/latch/actions/workflows/ci.yml)
+
 A small app for Linux Mint (Cinnamon) that switches three risky things on and off: **Wine**, **xdotool** and the **firewall**.
 
 I am building this right now. It is early. Things will break, and I will change things a lot.
+
+<p align="center">
+  <img src="docs/screenshots/wine.png" width="31%" alt="Wine page">
+  <img src="docs/screenshots/firewall.png" width="31%" alt="Firewall page">
+  <img src="docs/screenshots/settings.png" width="31%" alt="Settings page">
+</p>
+
+## Install
+
+Latch is for **Linux Mint 22 and newer** (and Ubuntu 24.04 and newer), on x86_64 with the Cinnamon desktop. That is all I have tried it on.
+
+**Option 1: apt (recommended).** Add the Latch repository once, then install and update like any other package.
+
+```bash
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://theamanullahdev.github.io/latch/key.asc | sudo gpg --dearmor -o /etc/apt/keyrings/latch.gpg
+echo "deb [signed-by=/etc/apt/keyrings/latch.gpg] https://theamanullahdev.github.io/latch stable main" | sudo tee /etc/apt/sources.list.d/latch.list
+sudo apt update
+sudo apt install latch
+```
+
+**Option 2: one file.** Download the `.deb` and its checksum from the [Releases](https://github.com/theamanullahdev/latch/releases) page.
+
+```bash
+sha256sum -c SHA256SUMS
+sudo apt install ./latch_0.1.0-1_amd64.deb
+```
+
+**Option 3: build it yourself.** See [Build from source](#build-from-source).
+
+Then start **Latch** from the app menu, or run `latch` in a terminal. In Settings you can add the panel applet and the desktop desklet.
+
+Other distros: only Debian-based packages for now (Mint, Ubuntu). Arch and others are not packaged. Building from source should work anywhere GTK3 is available.
+
+### Uninstall
+
+```bash
+sudo apt remove latch
+sudo rm -f /etc/apt/sources.list.d/latch.list /etc/apt/keyrings/latch.gpg   # if you used option 1
+```
+
+Before you remove it, open Settings and press **Remove** on the applet and the desklet. Your own settings live in `~/.config/latch`, `~/.local/share/latch` and `~/.cache/latch`. Delete them if you want a full clean up.
+
+**Important:** removing Latch does not undo what it did. If Wine or xdotool is locked at that moment, unlock them first. See the next section.
+
+## Security: what Latch changes, and how to undo it
+
+Latch changes system settings, so you should know exactly what it touches.
+
+| Switch   | What it does                                                                        | Undo by hand |
+|----------|-------------------------------------------------------------------------------------|--------------|
+| Wine     | Lock = `chmod 700` on the Wine program files. Unlock = `chmod 755`.                 | `sudo chmod 755 "$(readlink -f /usr/bin/wine)"` and the same for `wine64` |
+| xdotool  | Lock = `chmod 700` on `/usr/bin/xdotool`. Unlock = `chmod 755`.                     | `sudo chmod 755 "$(readlink -f /usr/bin/xdotool)"` |
+| Firewall | `ufw --force enable` or `ufw disable`. It never adds, removes or edits your rules. | `sudo ufw enable` or `sudo ufw disable` |
+
+To unlock everything in one go:
+
+```bash
+for f in wine wine64 xdotool; do p=$(readlink -f /usr/bin/$f) && [ -e "$p" ] && sudo chmod 755 "$p"; done
+```
+
+Good to know:
+
+- A locked file can still be run by root. Locking only stops normal users, and the agents that run as you.
+- If the `wine` or `xdotool` package is upgraded, the new files come back unlocked. Latch shows the real state, so you will see it.
+- Making things safer (lock, disable, firewall on) never asks for a password. Making things riskier (unlock, enable, firewall off) does.
+
+What gets installed on the machine:
+
+- `/usr/bin/latch`, the app.
+- `/usr/libexec/latch/`: seven small root programs. Six do one fixed job each (`wine-enable`, `firewall-disable` and so on) and take no input. The seventh, `latch-helper`, only installs or removes this set.
+- `/usr/share/polkit-1/actions/org.latch.policy`: the rules for which job needs a password.
+- A menu entry and an icon.
+- In your home folder: `~/.config/latch`, `~/.local/share/latch`, `~/.cache/latch`, and (only if you press Install in Settings) the applet and desklet under `~/.local/share/cinnamon`.
+
+Found a security problem? Please report it privately: open the **Security** tab of this repo and choose **Report a vulnerability**. Please do not post exploit details in a public issue.
 
 ## Why I am making this
 
@@ -24,7 +102,9 @@ So Latch is a control panel for exactly that: what my machine allows, and what i
 - A panel applet and a desktop desklet, so you can see the state without opening anything.
 - It has its own look (charcoal, warm gray, amber, no blue, no purple). You can switch to your system theme in Settings.
 - Each switch has a **Test** button right under it. It runs the real tool, so you can see if the switch did what it says. For Wine it runs a tiny sample program.
-- It installs its own pieces from Settings: the helper, a menu entry, the applet and the desklet. A clean Mint should be enough.
+- **Timed unlock** for Wine and xdotool: pick 1 minute to 1 hour and it locks itself again. If you close Latch while a timer runs, it locks early, so an unlock cannot be forgotten.
+- A custom app name and icon, in Settings.
+- It installs its own pieces from Settings: the helper, a menu entry, the applet and the desklet.
 
 ## The password rule
 
@@ -40,25 +120,16 @@ The password prompt comes from polkit, so it is the normal system dialog. One pa
 
 ## Where it is today
 
-Early prototype. Be careful.
+Early prototype (version 0.1.0, marked as a pre-release). Be careful.
 
-What I have tested, and how:
+- I have the `.deb` installed on my own Linux Mint 22.3 machine and I use it there.
+- I tested the root helper, the whole window, the `.deb` and the timed unlock on a throwaway fake root (a user namespace with stand-in `wine`, `xdotool` and `ufw`). Run the helper checks yourself: `extras/scripts/e2e.sh helper`.
+- The polkit rules pass polkit's own validator.
+- I have **not** tried other distros, other Mint versions, other desktops, or Wayland.
 
-- **The root helper**, on a fake root (a throwaway user namespace with stand-in `wine`, `xdotool` and `ufw`). Install, all six jobs, bad input and uninstall all pass. Run it yourself: `extras/scripts/e2e.sh helper`.
-- **The real window**, on that same fake root. I flipped switches, ran the Test buttons, installed and removed the helper from Settings, and used search.
-- **The `.deb`**: I unpacked it and ran the app and helper that are inside it on the fake root. The polkit policy also passes polkit's own validator.
-- **On my real desktop**: the themes (and remembering the choice), the menu entry, the panel applet and the desklet. The Wine test runs real Wine 9 with a sample program.
+Not done yet: a "run this one program with Wine unlocked" button, and per-app rules. See the [CHANGELOG](CHANGELOG.md) for what changed so far.
 
-What I have **not** tested yet: the real polkit password prompt. My test setup has to stub it, so the first real flip on a real install is still ahead of me. 
-Also tested on the fake root and my real desktop:
-
-- **Timed unlock** for Wine and xdotool. Pick a delay under the switch (1 minute to 1 hour). The state line counts down and it locks itself at zero. Locking is the safe direction, so it never needs a password. If you close Latch while a timer runs, it locks early. If a timer ran out while Latch was closed, it locks on the next start. An unlock cannot be forgotten.
-- **Custom app name and icon**, in Settings. The name shows in the window, the menu entry, the panel applet and the desklet. Any image works as an icon. A bad file is rejected.
-- Installed applets and desklets update themselves when the app updates.
-
-Not done yet: a Windows-style "run this one program with Wine unlocked" button, and per-app rules.
-
-## Try it
+## Build from source
 
 You need Rust and the GTK3 development files.
 
@@ -72,6 +143,13 @@ cargo run -p latch-app
 To open a page directly: `cargo run -p latch-app -- settings` (or `wine`, `xdotool`, `firewall`).
 
 The first time you flip a switch, Latch installs a small root helper. That asks for your admin password once. You can remove it again in Settings.
+
+To make your own `.deb`:
+
+```bash
+cargo install cargo-deb
+extras/scripts/pack.sh          # writes target/deb/
+```
 
 ## How it works, short version
 

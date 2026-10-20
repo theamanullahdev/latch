@@ -90,10 +90,12 @@ mod tests {
 
     #[test]
     fn roundtrip() {
-        let mut cfg = Config::default();
-        cfg.theme = Mode::System;
-        cfg.name = "My Gate".into();
-        cfg.icon = Some(PathBuf::from("/tmp/i.svg"));
+        let mut cfg = Config {
+            theme: Mode::System,
+            name: "My Gate".into(),
+            icon: Some(PathBuf::from("/tmp/i.svg")),
+            ..Config::default()
+        };
         cfg.autolock[Toggle::Wine.index()] = 300;
         cfg.deadline[Toggle::Xdotool.index()] = 1_800_000_000;
         assert_eq!(parse(&render(&cfg)), cfg);
