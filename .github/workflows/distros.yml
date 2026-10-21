@@ -111,3 +111,29 @@ jobs:
           latch status
           ls /usr/libexec/latch
           test -f /usr/share/polkit-1/actions/org.latch.policy
+
+  # The exact commands from the README, against the real published repository.
+  apt-repo:
+    name: apt repo on ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Ubuntu 24.04, image: 'ubuntu:24.04' }
+          - { name: Linux Mint 22, image: 'linuxmintd/mint22-amd64' }
+          - { name: Debian 13, image: 'debian:trixie' }
+          - { name: Kali rolling, image: 'kalilinux/kali-rolling' }
+    steps:
+      - name: Tools a normal desktop already has
+        run: apt-get update && apt-get install -y --no-install-recommends sudo curl gpg ca-certificates
+      - name: Add the repository and install, as the README says
+        run: |
+          sudo install -d -m 0755 /etc/apt/keyrings
+          curl -fsSL https://theamanullahdev.github.io/latch/key.asc | sudo gpg --dearmor -o /etc/apt/keyrings/latch.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/latch.gpg] https://theamanullahdev.github.io/latch stable main" | sudo tee /etc/apt/sources.list.d/latch.list
+          sudo apt update
+          sudo apt install -y --no-install-recommends latch
+          latch status
+          apt-cache policy latch | grep -E 'Installed|Candidate'

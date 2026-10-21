@@ -17,6 +17,7 @@ All notable changes to Latch. The format follows [Keep a Changelog](https://keep
 - The minimum Rust version (1.85) is declared in `Cargo.toml`.
 
 ### Changed
+- The `.deb` now only *suggests* `wine` and `ufw`. Before, apt installed them by default (Recommends), which pulled a whole Wine into a small panel app.
 - Settings, `latch setup helper remove` and the helper itself now refuse to remove a helper that a package manager installed. Only a helper that Latch installed itself can be removed that way.
 - A switch that covers several files now reads as unlocked if any one of them can still be run.
 - Latch theme asks GTK for its built-in dark variant too, so it stays dark where the Adwaita-dark theme is not installed.

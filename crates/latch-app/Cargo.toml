@@ -21,7 +21,7 @@ section = "utils"
 priority = "optional"
 depends = "$auto, pkexec | policykit-1"
 maintainer-scripts = "../../extras/packaging/scripts"
-recommends = "ufw, wine"
+suggests = "ufw, wine"
 extended-description = "Switch Wine, xdotool and the firewall on or off from one window. Safer changes are free. Riskier changes ask for a password."
 assets = [
   ["target/release/latch", "usr/bin/latch", "755"],
