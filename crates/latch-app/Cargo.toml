@@ -12,7 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 latch-core = { path = "../latch-core" }
-gtk = { version = "0.18", package = "gtk" }
+gtk = { version = "0.19", package = "gtk" }
 
 [package.metadata.deb]
 name = "latch"
