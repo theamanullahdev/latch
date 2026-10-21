@@ -1,6 +1,6 @@
 //! System helper: 6 root-owned copies + polkit policy. Installed by the helper itself, one admin prompt.
 
-use latch_core::{Direction, Toggle, HELPER_DIR};
+use latch_core::{Direction, Toggle, HELPER_DIR, HELPER_MARKER};
 use std::{env, path::{Path, PathBuf}, process::Command};
 
 fn installed_helper() -> PathBuf {
@@ -19,11 +19,20 @@ pub fn is_installed() -> bool {
     })
 }
 
+/// Helper present, but not made by Latch itself: a .deb or Arch package owns it.
+pub fn managed_by_package() -> bool {
+    is_installed() && !Path::new(HELPER_DIR).join(HELPER_MARKER).exists()
+}
+
 pub fn install() -> Result<(), String> {
     admin("install")
 }
 
 pub fn remove() -> Result<(), String> {
+    // Same refusal as the helper, but before any password prompt.
+    if managed_by_package() {
+        return Err("installed by a package manager. Remove it with apt, pacman or dnf instead".into());
+    }
     admin("uninstall")
 }
 

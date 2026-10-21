@@ -30,6 +30,9 @@ impl Direction {
 
 pub const HELPER_DIR: &str = "/usr/libexec/latch";
 
+/// Created by `latch-helper install`. A helper without it came from a package manager.
+pub const HELPER_MARKER: &str = ".self-installed";
+
 impl Toggle {
     pub const ALL: [Toggle; 3] = [Toggle::Wine, Toggle::Xdotool, Toggle::Firewall];
 

@@ -1,0 +1,113 @@
+name: Distros
+
+# Does a newcomer get a working Latch on other distros?
+#  - installer: runs extras/scripts/install.sh on a clean container of each distro.
+#  - deb-install: installs the .deb on the Debian-family containers.
+# Nobody needs to own these machines. Runs on code changes, weekly, and on demand.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'extras/scripts/install.sh'
+      - 'extras/packaging/**'
+      - '.github/workflows/distros.yml'
+      - 'crates/**'
+      - 'Cargo.*'
+  pull_request:
+    paths:
+      - 'extras/scripts/install.sh'
+      - '.github/workflows/distros.yml'
+  schedule:
+    - cron: '23 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    name: installer on ${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Ubuntu 24.04, image: 'ubuntu:24.04', pm: apt }
+          - { name: Linux Mint 22, image: 'linuxmintd/mint22-amd64', pm: apt }
+          - { name: Debian 13, image: 'debian:trixie', pm: apt }
+          - { name: Kali rolling, image: 'kalilinux/kali-rolling', pm: apt }
+          - { name: Arch Linux, image: 'archlinux:base-devel', pm: pacman }
+          - { name: Fedora, image: 'fedora:latest', pm: dnf }
+          - { name: openSUSE Tumbleweed, image: 'opensuse/tumbleweed', pm: zypper }
+    steps:
+      - name: Tools the checkout step needs
+        run: |
+          case "${{ matrix.pm }}" in
+            apt)    apt-get update && apt-get install -y --no-install-recommends git ca-certificates sudo ;;
+            pacman) pacman -Syu --noconfirm --needed git sudo ;;
+            dnf)    dnf install -y git sudo ;;
+            zypper) zypper --non-interactive install git sudo tar gzip ;;
+          esac
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Run the installer exactly as a newcomer would
+        run: extras/scripts/install.sh --yes --no-run --allow-root
+      - name: Check what it installed
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          latch status
+          latch status --json
+          if ldd "$(command -v latch)" | grep "not found"; then echo "missing libraries"; exit 1; fi
+          test -x "$HOME/.local/bin/latch-helper"
+          latch set wine sideways || test $? -eq 2
+
+  deb-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: System libraries
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgtk-3-dev libglib2.0-dev
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-deb
+      - run: cargo build --release --workspace
+      - run: mkdir dist && cargo deb -p latch-app --no-build --output dist/
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: deb
+          path: dist/*.deb
+          if-no-files-found: error
+
+  deb-install:
+    name: .deb on ${{ matrix.name }}
+    needs: deb-build
+    runs-on: ubuntu-24.04
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Ubuntu 24.04, image: 'ubuntu:24.04' }
+          - { name: Linux Mint 22, image: 'linuxmintd/mint22-amd64' }
+          - { name: Debian 13, image: 'debian:trixie' }
+          - { name: Kali rolling, image: 'kalilinux/kali-rolling' }
+    steps:
+      - name: Tools the artifact download needs
+        run: apt-get update && apt-get install -y --no-install-recommends ca-certificates
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: deb
+          path: deb
+      - name: Install the .deb with apt, like a user would
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get install -y ./deb/*.deb
+          dpkg -s latch | grep -E '^(Status|Version)'
+          latch status
+          ls /usr/libexec/latch
+          test -f /usr/share/polkit-1/actions/org.latch.policy

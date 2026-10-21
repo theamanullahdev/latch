@@ -3,6 +3,7 @@ description = "Switch Wine, xdotool and the firewall on or off"
 name = "latch-app"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [[bin]]

@@ -7,7 +7,7 @@ Map of repo. Read this, not the whole tree. Edit a line on any major change.
 Cargo.toml        workspace
 lubalab.md        this map
 CHANGELOG.md      keep-a-changelog. release notes come from the matching section
-.github/          workflows: ci.yml (test + clippy + Arch container build), release.yml (v* tag -> .deb, release, apt repo), aur.yml (v* tag -> AUR). dependabot.yml, ISSUE_TEMPLATE/
+.github/          workflows: distros.yml (installer on 7 distro containers + .deb on 4), ci.yml (test + clippy + Arch container build), release.yml (v* tag -> .deb, release, apt repo), aur.yml (v* tag -> AUR). dependabot.yml, ISSUE_TEMPLATE/
 crates/           rust code
   latch-core/     Toggle, Direction, password rules. no gtk
   latch-helper/   root binary. one file, 6 installed names `<toggle>-<enable|disable>`
@@ -30,7 +30,7 @@ extras/
   cinnamon/       applet latch@amanullah, desklet latch-desklet@amanullah (js, embedded in binary)
   fonts/          OFL ttf + licenses
   packaging/      polkit policy, .desktop, icons, apt-index.html (landing page of the apt repo), arch/PKGBUILD
-  scripts/        apt-repo.sh (signed apt repo with apt-ftparchive), pack.sh (make .deb into target/deb/), e2e.sh (fake-root tests: helper | gui | deb)
+  scripts/        install.sh (newcomer installer: apt/pacman/dnf/zypper, rustup if cargo < MSRV, installs to ~/.local), apt-repo.sh (signed apt repo with apt-ftparchive), pack.sh (make .deb into target/deb/), e2e.sh (fake-root tests: helper | gui | deb)
   packaging/scripts/  postinst, postrm (refresh icon + menu cache)
 ```
 
@@ -73,3 +73,6 @@ helper `install`: copies self to /usr/libexec/latch/{6 actions + latch-helper}, 
 - CI `arch` job: builds + tests in archlinux:base-devel and runs makepkg on the PKGBUILD (it builds the last tagged release tarball).
 - Input tools covered by the "xdotool" switch: see INPUT_TOOLS in latch-core/src/probe.rs. Add new tools there only.
 - GTK3 quirk: cross-provider CSS, later provider wins regardless of specificity.
+- MSRV is `rust-version` in Cargo.toml (1.85, from indexmap/hashbrown). install.sh reads it from there. Ubuntu/Mint apt cargo is 1.75, too old.
+- Helper installed by `latch-helper install` writes the marker `.self-installed`. Package-installed helpers have none, so uninstall refuses (Settings, CLI and helper all agree).
+- Test installer pieces locally without touching the system: `XDG_DATA_HOME=/tmp/x GSETTINGS_BACKEND=memory extras/scripts/install.sh --yes --no-run --skip-deps --prefix /tmp/x`.

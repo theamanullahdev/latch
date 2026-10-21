@@ -1,14 +1,17 @@
 //! Terminal use, no window. For scripts and status bars (Waybar on Hyprland).
 //!   latch status [--json]      show state. --json = Waybar custom module format
 //!   latch set <toggle> <on|off>  flip one switch (polkit asks if it needs a password)
+//!   latch setup <piece> <install|remove>  what Settings > Install does, without a window
 
-use crate::backend;
+use crate::{backend, cinnamon::{self, Kind}, menu, setup};
 use latch_core::{probe, Toggle};
 
 const HELP: &str = "\
 latch                       open the window (or: latch wine | xdotool | firewall | settings)
 latch status [--json]       show the state. --json prints Waybar custom module JSON
 latch set <toggle> <on|off> flip one switch. toggles: wine, xdotool, firewall
+latch setup <piece> <install|remove>
+                            pieces: helper, menu, applet, desklet (what Settings > Install does)
 latch help                  this text";
 
 /// Some(exit code) = handled here, no window. None = open the window.
@@ -20,6 +23,7 @@ pub fn run(args: &[String]) -> Option<i32> {
             Some(0)
         }
         Some("set") => Some(set(&args[1..])),
+        Some("setup") => Some(setup_piece(&args[1..])),
         Some("help" | "-h" | "--help") => {
             println!("{HELP}");
             Some(0)
@@ -91,6 +95,62 @@ fn set(args: &[String]) -> i32 {
     if now == Some(on) { 0 } else { 1 }
 }
 
+#[derive(Debug, PartialEq)]
+enum Piece {
+    Helper,
+    Menu,
+    Applet,
+    Desklet,
+}
+
+fn parse_setup(args: &[String]) -> Result<(Piece, bool), String> {
+    let [piece, action] = args else {
+        return Err("usage: latch setup <helper|menu|applet|desklet> <install|remove>".into());
+    };
+    let piece = match piece.as_str() {
+        "helper" => Piece::Helper,
+        "menu" => Piece::Menu,
+        "applet" => Piece::Applet,
+        "desklet" => Piece::Desklet,
+        other => return Err(format!("unknown piece '{other}'")),
+    };
+    match action.as_str() {
+        "install" => Ok((piece, true)),
+        "remove" => Ok((piece, false)),
+        other => Err(format!("expected install or remove, got '{other}'")),
+    }
+}
+
+fn setup_piece(args: &[String]) -> i32 {
+    let (piece, install) = match parse_setup(args) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            eprintln!("latch: {e}");
+            return 2;
+        }
+    };
+    let result = match (piece, install) {
+        (Piece::Helper, true) => setup::install(),
+        (Piece::Helper, false) => setup::remove(),
+        (Piece::Menu, true) => menu::install(),
+        (Piece::Menu, false) => menu::remove(),
+        (Piece::Applet, true) => cinnamon::enable(Kind::Applet),
+        (Piece::Applet, false) => cinnamon::disable(Kind::Applet),
+        (Piece::Desklet, true) => cinnamon::enable(Kind::Desklet),
+        (Piece::Desklet, false) => cinnamon::disable(Kind::Desklet),
+    };
+    match result {
+        Ok(()) => {
+            println!("ok");
+            0
+        }
+        Err(e) => {
+            eprintln!("latch: {e}");
+            1
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -124,6 +184,15 @@ mod tests {
         assert!(parse_set(&s(&["wine"])).is_err());
         assert!(parse_set(&s(&["rm", "on"])).is_err());
         assert!(parse_set(&s(&["wine", "maybe"])).is_err());
+    }
+
+    #[test]
+    fn setup_arguments() {
+        assert_eq!(parse_setup(&s(&["menu", "install"])), Ok((Piece::Menu, true)));
+        assert_eq!(parse_setup(&s(&["helper", "remove"])), Ok((Piece::Helper, false)));
+        assert!(parse_setup(&s(&["menu"])).is_err());
+        assert!(parse_setup(&s(&["kernel", "install"])).is_err());
+        assert!(parse_setup(&s(&["menu", "explode"])).is_err());
     }
 
     #[test]

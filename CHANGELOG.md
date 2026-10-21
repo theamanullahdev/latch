@@ -11,7 +11,13 @@ All notable changes to Latch. The format follows [Keep a Changelog](https://keep
 - Terminal commands: `latch status`, `latch status --json` (for Waybar on Hyprland) and `latch set <toggle> <on|off>`.
 - README sections for Arch and Hyprland, issue templates, and Dependabot for the pinned GitHub Actions.
 
+- `extras/scripts/install.sh`: one command to build and install on Debian-family, Arch, Fedora and openSUSE systems. It installs build packages, gets a new enough Rust (Ubuntu and Mint ship one that is too old), builds, installs into `~/.local` and adds a menu entry. `--uninstall` removes it again.
+- CI runs the installer on clean containers of Ubuntu 24.04, Linux Mint 22, Debian 13, Kali, Arch, Fedora and openSUSE, and installs the `.deb` on the four Debian-family ones.
+- `latch setup <helper|menu|applet|desklet> <install|remove>`: what the Settings buttons do, from a terminal.
+- The minimum Rust version (1.85) is declared in `Cargo.toml`.
+
 ### Changed
+- Settings, `latch setup helper remove` and the helper itself now refuse to remove a helper that a package manager installed. Only a helper that Latch installed itself can be removed that way.
 - A switch that covers several files now reads as unlocked if any one of them can still be run.
 - Latch theme asks GTK for its built-in dark variant too, so it stays dark where the Adwaita-dark theme is not installed.
 

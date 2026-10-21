@@ -22,7 +22,8 @@ fn always() -> bool {
 fn items() -> [Item; 4] {
     [
         Item { title: "System helper", note: "Lets Latch switch things. One admin prompt.",
-               installed: setup::is_installed, install: setup::install, remove: setup::remove, usable: always },
+               installed: setup::is_installed, install: setup::install, remove: setup::remove,
+               usable: || !setup::managed_by_package() },
         Item { title: "Menu entry", note: "Start Latch from the app menu.",
                installed: menu::is_installed, install: menu::install, remove: menu::remove, usable: always },
         Item { title: "Panel applet", note: "Switches in the Cinnamon panel.",

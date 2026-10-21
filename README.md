@@ -14,9 +14,20 @@ I am building this right now. It is early. Things will break, and I will change 
 
 ## Install
 
-Latch is for **Linux Mint 22 and newer** (and Ubuntu 24.04 and newer), on x86_64 with the Cinnamon desktop. That is all I have tried it on.
+Pick your system:
 
-**Option 1: apt (recommended).** Add the Latch repository once, then install and update like any other package.
+| Your system | Easiest way |
+|-------------|-------------|
+| Linux Mint 22+, Ubuntu 24.04+, Debian 13, Kali | **Option 1**: apt repository |
+| Arch, Manjaro, EndeavourOS | **Option 2**: install script (or the [PKGBUILD](#arch-linux)) |
+| Fedora, openSUSE | **Option 2**: install script |
+| Older Mint, Ubuntu or Debian, or anything else | **Option 2**: install script, or [build by hand](#build-from-source) |
+
+Latch is for x86_64 Linux. The main window works on any desktop with GTK3. The panel applet and desklet need Cinnamon. On Hyprland and other Wayland desktops see [below](#hyprland-and-other-wayland-desktops).
+
+### Option 1: apt repository (Debian family)
+
+Add the Latch repository once, then install and update like any other package.
 
 ```bash
 sudo install -d -m 0755 /etc/apt/keyrings
@@ -26,18 +37,48 @@ sudo apt update
 sudo apt install latch
 ```
 
-**Option 2: one file.** Download the `.deb` and its checksum from the [Releases](https://github.com/theamanullahdev/latch/releases) page.
+The package needs glibc 2.39 or newer, so it is for Mint 22+, Ubuntu 24.04+, Debian 13 and Kali rolling. On anything older (Mint 21, Ubuntu 22.04, Debian 12) use Option 2.
+
+### Option 2: install script (any distro)
+
+This is the "I just found this repo and want to try it" way. It does everything for you.
+
+```bash
+git clone https://github.com/theamanullahdev/latch.git
+cd latch
+extras/scripts/install.sh
+```
+
+What it does, and it asks before it starts:
+
+1. Finds your distro and installs the build packages with its package manager (`apt`, `pacman`, `dnf` or `zypper`). This is the only step that uses `sudo`.
+2. Checks for Rust 1.85 or newer. If yours is older (Ubuntu and Mint ship 1.75), it installs a private copy with [rustup](https://rustup.rs). Nothing system-wide.
+3. Builds Latch (a few minutes) and installs it into `~/.local/bin`, plus a menu entry.
+4. Starts it.
+
+Options: `--yes` (no questions), `--no-run`, `--prefix DIR`, `--skip-deps`, `--uninstall`. See `extras/scripts/install.sh --help`.
+
+If your distro is not in the list, it tells you what to install by hand and stops.
+
+### Option 3: one file
+
+Download the `.deb` and its checksum from the [Releases](https://github.com/theamanullahdev/latch/releases) page (Debian family only).
 
 ```bash
 sha256sum -c SHA256SUMS
 sudo apt install ./latch_0.1.0-1_amd64.deb
 ```
 
-**Option 3: build it yourself.** See [Build from source](#build-from-source).
-
 Then start **Latch** from the app menu, or run `latch` in a terminal. In Settings you can add the panel applet and the desktop desklet.
 
-Using Arch or Hyprland? See [Arch Linux](#arch-linux) and [Hyprland and other Wayland desktops](#hyprland-and-other-wayland-desktops). Other distros: build from source, it should work anywhere GTK3 is available.
+### What is checked, and what is not
+
+| Distro | How it is checked automatically (GitHub builds it on a clean container) |
+|--------|-------------------------------------------------------------------------|
+| Ubuntu 24.04, Linux Mint 22, Debian 13, Kali rolling | the install script builds and installs it, and the `.deb` installs with `apt` |
+| Arch Linux, Fedora, openSUSE Tumbleweed | the install script builds and installs it. On Arch the `PKGBUILD` is built too |
+
+In each case the check ends with `latch status` running, so the program starts and finds all its libraries. **Nobody has opened the window on those distros.** A container has no screen. The only machine I use it on is Linux Mint 22.3 with Cinnamon. If the window misbehaves on your system, please open an issue and say which distro and desktop you have.
 
 ### Uninstall
 
@@ -46,7 +87,7 @@ sudo apt remove latch
 sudo rm -f /etc/apt/sources.list.d/latch.list /etc/apt/keyrings/latch.gpg   # if you used option 1
 ```
 
-Before you remove it, open Settings and press **Remove** on the applet and the desklet. Your own settings live in `~/.config/latch`, `~/.local/share/latch` and `~/.cache/latch`. Delete them if you want a full clean up.
+If you used the install script, run `extras/scripts/install.sh --uninstall` instead. Before you remove it, open Settings and press **Remove** on the applet and the desklet. Your own settings live in `~/.config/latch`, `~/.local/share/latch` and `~/.cache/latch`. Delete them if you want a full clean up.
 
 **Important:** removing Latch does not undo what it did. If Wine or xdotool is locked at that moment, unlock them first. See the next section.
 
@@ -61,7 +102,7 @@ cd latch/extras/packaging/arch
 makepkg -si
 ```
 
-On every push, GitHub builds Latch on a real Arch Linux container, runs the tests, and builds this package from the `PKGBUILD`. So I know it compiles and packages on Arch. What I do **not** know is how the window behaves on a real Arch desktop, because I do not run Arch. Tell me if something is off.
+If you do not want to deal with `makepkg`, the [install script](#option-2-install-script-any-distro) works on Arch too. On every push, GitHub builds Latch on a real Arch Linux container, runs the tests, and builds this package from the `PKGBUILD`. So I know it compiles and packages on Arch. What I do **not** know is how the window behaves on a real Arch desktop, because I do not run Arch. Tell me if something is off.
 
 ## Hyprland and other Wayland desktops
 
@@ -86,7 +127,7 @@ Latch is a GTK3 app, so it should run on Wayland (natively or through XWayland).
 
 - **You need a polkit agent running**, for example `hyprpolkitagent` or `polkit-gnome`. Without one, Latch cannot ask for your password.
 - **xdotool does not work on Wayland.** The "xdotool" switch locks all the common input tools: `xdotool`, `ydotool`, `wtype` and `dotool`. If you have none of them, the page says "Not found".
-- **Terminal commands**, with no window: `latch status`, `latch status --json`, and `latch set wine off` (or `on`, and `xdotool`, `firewall`). Turning something riskier still asks for a password.
+- **Terminal commands**, with no window: `latch status`, `latch status --json`, and `latch set wine off` (or `on`, and `xdotool`, `firewall`). Turning something riskier still asks for a password. `latch setup <helper|menu|applet|desklet> <install|remove>` does what the Settings buttons do.
 
 ## Security: what Latch changes, and how to undo it
 
@@ -169,10 +210,17 @@ Not done yet: a "run this one program with Wine unlocked" button, and per-app ru
 
 ## Build from source
 
-You need Rust and the GTK3 development files.
+The install script does all of this for you. By hand:
+
+You need **Rust 1.85 or newer** and the GTK3 development files. Careful: the `cargo` that Ubuntu and Mint ship through apt is 1.75, which is too old. Get a current one from [rustup.rs](https://rustup.rs).
 
 ```bash
-sudo apt install libgtk-3-dev libglib2.0-dev
+# Debian, Ubuntu, Mint, Kali
+sudo apt install build-essential pkg-config libgtk-3-dev libglib2.0-dev pkexec
+# Arch:     sudo pacman -S --needed base-devel gtk3 polkit
+# Fedora:   sudo dnf install gcc pkgconf-pkg-config gtk3-devel glib2-devel polkit
+# openSUSE: sudo zypper install gcc pkg-config gtk3-devel glib2-devel polkit
+
 git clone https://github.com/theamanullahdev/latch.git
 cd latch
 cargo run -p latch-app
@@ -180,7 +228,7 @@ cargo run -p latch-app
 
 To open a page directly: `cargo run -p latch-app -- settings` (or `wine`, `xdotool`, `firewall`).
 
-The first time you flip a switch, Latch installs a small root helper. That asks for your admin password once. You can remove it again in Settings.
+The first time you flip a switch, Latch installs a small root helper. That asks for your admin password once. You can remove it again in Settings. (If a package such as the `.deb` put the helper there, use your package manager to remove it. Settings will not touch a package's files.)
 
 To make your own `.deb`:
 
